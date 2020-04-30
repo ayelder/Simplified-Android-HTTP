@@ -13,6 +13,10 @@ import org.slf4j.LoggerFactory
 import java.util.ServiceLoader
 import java.util.concurrent.TimeUnit
 
+/**
+ * A provider of okhttp clients.
+ */
+
 class LSHTTPClients(
   private val problemReportParsers: LSHTTPProblemReportParserFactoryType,
   private val interceptors: List<LSHTTPInterceptorFactoryType>

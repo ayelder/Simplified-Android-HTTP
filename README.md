@@ -25,6 +25,7 @@ all codebases without duplicating code.
 * Simple HTTP client interface modelled on [okhttp](https://square.github.io/okhttp/)
 * Automatic [RFC7807](https://tools.ietf.org/html/rfc7807) problem report parsing
 * Control over redirects
+* Optional integration with [Chucker](https://github.com/ChuckerTeam/chucker)
 * High-coverage automated test suite
 * Easily mocked, strongly-typed Kotlin API
 * Apache 2.0 license
