@@ -70,5 +70,4 @@ sealed class LSHTTPResponseStatus {
   data class Failed(
     val exception: Exception
   ) : LSHTTPResponseStatus()
-
 }

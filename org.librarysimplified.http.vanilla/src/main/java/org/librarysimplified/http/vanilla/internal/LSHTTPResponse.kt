@@ -2,10 +2,8 @@ package org.librarysimplified.http.vanilla.internal
 
 import okhttp3.Response
 import okhttp3.internal.closeQuietly
-import one.irradia.mime.api.MIMEType
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 import org.librarysimplified.http.api.LSHTTPResponseType
-import java.io.InputStream
 
 class LSHTTPResponse(
   val request: LSHTTPRequest,

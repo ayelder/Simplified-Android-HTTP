@@ -17,5 +17,4 @@ interface LSHTTPProblemReportParserFactoryType {
     uri: String,
     stream: InputStream
   ): LSHTTPProblemReportParserType
-
 }

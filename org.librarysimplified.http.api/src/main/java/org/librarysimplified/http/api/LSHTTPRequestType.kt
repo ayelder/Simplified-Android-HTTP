@@ -11,5 +11,4 @@ interface LSHTTPRequestType {
    */
 
   fun execute(): LSHTTPResponseType
-
 }

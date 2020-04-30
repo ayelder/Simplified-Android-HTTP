@@ -12,7 +12,6 @@ import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.AL
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestType
 import org.librarysimplified.http.api.LSHTTPResponseStatus
-import java.io.ByteArrayInputStream
 
 class LSHTTPRequest(
   private val client: LSHTTPClient,

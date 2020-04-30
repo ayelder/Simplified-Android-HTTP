@@ -3,7 +3,6 @@ package org.librarysimplified.http.tests
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.function.Executable
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserType
 import org.librarysimplified.http.tests.LSHTTPTestDirectories.resourceStreamOf
@@ -75,4 +74,3 @@ abstract class LSHTTPProblemReportParserContract {
     }
   }
 }
-

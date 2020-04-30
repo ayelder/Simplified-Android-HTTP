@@ -9,5 +9,4 @@ object LSHTTPMimeTypes {
 
   val problemReport =
     MIMEType("application", "api-problem+json", mapOf())
-
 }

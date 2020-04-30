@@ -23,5 +23,4 @@ interface LSHTTPClientType {
 
   fun newRequest(url: String): LSHTTPRequestBuilderType =
     this.newRequest(URI.create(url))
-
 }

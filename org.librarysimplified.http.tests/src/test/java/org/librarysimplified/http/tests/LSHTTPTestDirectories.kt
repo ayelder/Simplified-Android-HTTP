@@ -44,7 +44,7 @@ object LSHTTPTestDirectories {
 
   @Throws(IOException::class)
   fun resourceStreamOf(
-    clazz: Class<*>  = LSHTTPTestDirectories::class.java,
+    clazz: Class<*> = LSHTTPTestDirectories::class.java,
     output: File,
     name: String
   ): InputStream {
@@ -52,7 +52,7 @@ object LSHTTPTestDirectories {
   }
 
   fun stringOf(
-    clazz: Class<*>  = LSHTTPTestDirectories::class.java,
+    clazz: Class<*> = LSHTTPTestDirectories::class.java,
     output: File,
     name: String
   ): String {

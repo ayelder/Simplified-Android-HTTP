@@ -14,5 +14,4 @@ interface LSHTTPResponseType : Closeable {
    */
 
   val status: LSHTTPResponseStatus
-
 }
