@@ -9,6 +9,6 @@ dependencies {
 
 android {
   defaultConfig {
-    buildConfigField "String", "VERSION_NAME", "\"${VERSION_NAME}\""
+    buildConfigField "String", "CHUCKER_VERSION_NAME", "\"${VERSION_NAME}\""
   }
 }

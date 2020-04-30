@@ -16,7 +16,7 @@ class LSHTTPChuckerInterceptors : LSHTTPInterceptorFactoryType {
   override val name: String =
     "org.librarysimplified.http.chucker"
   override val version: String =
-    BuildConfig.VERSION_NAME
+    BuildConfig.CHUCKER_VERSION_NAME
 
   override fun createInterceptor(context: Context): Interceptor {
     return ChuckerInterceptor(context)
