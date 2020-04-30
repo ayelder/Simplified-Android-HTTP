@@ -1,0 +1,4 @@
+include ':org.librarysimplified.http.api'
+include ':org.librarysimplified.http.chucker'
+include ':org.librarysimplified.http.tests'
+include ':org.librarysimplified.http.vanilla'

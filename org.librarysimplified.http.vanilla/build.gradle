@@ -1,0 +1,16 @@
+dependencies {
+  api project(":org.librarysimplified.http.api")
+
+  implementation libraries.irradiaMimeAPI
+  implementation libraries.irradiaMimeVanilla
+  implementation libraries.jacksonDatabind
+  implementation libraries.kotlinStdlib
+  implementation libraries.okhttp
+  implementation libraries.slf4j
+}
+
+android {
+  defaultConfig {
+    buildConfigField "String", "HTTP_VERSION_NAME", "\"${VERSION_NAME}\""
+  }
+}

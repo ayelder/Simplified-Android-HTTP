@@ -1,0 +1,262 @@
+buildscript {
+  if ("$gradle.gradleVersion" != "6.3") {
+    throw new GradleException("Gradle version 6.3 is required (received $gradle.gradleVersion)")
+  }
+
+  // https://github.com/gradle/gradle/issues/11308#issuecomment-554317655
+  if (System.properties['org.gradle.internal.publish.checksums.insecure'] != 'true') {
+    throw new GradleException("org.gradle.internal.publish.checksums.insecure must be 'true'")
+  }
+
+  ext.kotlin_version = "1.3.72"
+
+  repositories {
+    mavenCentral()
+    google()
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:3.6.3'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1"
+    classpath "com.nabilhachicha:android-native-dependencies:0.1.2"
+    classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.15.0"
+    classpath "digital.wup:android-maven-publish:3.6.3"
+    classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2"
+  }
+}
+
+plugins {
+  id "com.github.ben-manes.versions" version "0.27.0"
+  id "com.vanniktech.android.junit.jacoco" version "0.15.0"
+  id "ru.vyarus.animalsniffer" version "1.5.0"
+
+  // Deprecated: Migrate to maven-publish.
+  //             https://developer.android.com/studio/build/maven-publish-plugin
+  id "digital.wup.android-maven-publish" version "3.6.3"
+  id "io.codearte.nexus-staging" version "0.21.2"
+  id "me.champeau.gradle.japicmp" version "0.2.9"
+}
+
+ext {
+  androidBuildToolsVersion = "28.0.3"
+  androidCompileSDKVersion = 28
+  androidMinimumSDKVersion = 21
+  androidTargetSDKVersion = 28
+
+  if (!project.hasProperty("mavenCentralUsername")) {
+    logger.warn("No mavenCentralUsername property specified: Using an empty value")
+    mavenCentralUsername = ""
+  }
+  if (!project.hasProperty("mavenCentralPassword")) {
+    logger.warn("No mavenCentralPassword property specified: Using an empty value")
+    mavenCentralPassword = ""
+  }
+
+  if (!project.hasProperty("org.librarysimplified.nexus.publish")) {
+    logger.warn("org.librarysimplified.nexus.publish is not set: We will publish artifacts to Maven Central")
+    useNYPLNexusPublish = false
+  } else {
+    logger.warn("org.librarysimplified.nexus.publish is set: We will publish artifacts to the NYPL Nexus")
+    useNYPLNexusPublish = true
+  }
+
+  if (!project.hasProperty("org.librarysimplified.nexus.depend")) {
+    logger.warn("org.librarysimplified.nexus.depend is not set: We will not depend on artifacts on the NYPL Nexus")
+    useNYPLNexusDepend = false
+  } else {
+    logger.warn("org.librarysimplified.nexus.depend is set: We will depend on artifacts on the NYPL Nexus")
+    useNYPLNexusDepend = true
+  }
+
+  junitVersion = "5.7.0-M1"
+}
+
+subprojects {
+  //
+  // We currently have transitive dependencies that specify dependencies on newer versions
+  // of SLF4J. These are subtly incompatible with Logback-Android, and it will be a while before
+  // new versions appear of both artifacts. Remove this when both are updated!
+  //
+  configurations.all {
+    resolutionStrategy.force libraries.slf4j
+  }
+}
+
+ext.libraries = [
+  autoValue            : "com.google.auto.value:auto-value-annotations:1.7",
+  autoValueProcessor   : "com.google.auto.value:auto-value:1.7",
+  chucker              : "com.github.ChuckerTeam.Chucker:library:3.2.0",
+  irradiaMimeAPI       : "one.irradia.mime:one.irradia.mime.api:1.0.0",
+  irradiaMimeVanilla   : "one.irradia.mime:one.irradia.mime.vanilla:1.0.0",
+  jacksonCore          : "com.fasterxml.jackson.core:jackson-core:2.10.0",
+  jacksonDatabind      : "com.fasterxml.jackson.core:jackson-databind:2.10.0",
+  jacksonKotlin        : "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9",
+  javaxAnnotationAPI   : "javax.annotation:javax.annotation-api:1.2-b01",
+  jcipAnnotations      : "com.github.stephenc.jcip:jcip-annotations:1.0-1",
+  jodaTime             : "joda-time:joda-time:2.9.9",
+  junitJupiterAPI      : "org.junit.jupiter:junit-jupiter-api:${junitVersion}",
+  junitJupiterEngine   : "org.junit.jupiter:junit-jupiter-engine:${junitVersion}",
+  kotlinStdlib         : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
+  logbackAndroidClassic: "com.github.tony19:logback-android-classic:1.1.1-6",
+  logbackAndroidCore   : "com.github.tony19:logback-android-core:1.1.1-6",
+  logbackClassic       : "ch.qos.logback:logback-classic:1.2.3",
+  mockitoAndroid       : "org.mockito:mockito-android:2.22.0",
+  mockWebServer        : "com.squareup.okhttp3:mockwebserver:4.6.0",
+  okhttp               : "com.squareup.okhttp3:okhttp:4.6.0",
+  slf4j                : "org.slf4j:slf4j-api:1.7.25",
+]
+
+apply plugin: "io.codearte.nexus-staging"
+apply plugin: "com.vanniktech.android.junit.jacoco"
+
+nexusStaging {
+  packageGroup = "org.librarysimplified"
+  numberOfRetries = 32
+  delayBetweenRetriesInMillis = 2000
+}
+
+allprojects {
+  group = project.ext["GROUP"]
+  version = project.ext["VERSION_NAME"]
+}
+
+// Configure all projects
+
+subprojects { project ->
+  switch (POM_PACKAGING) {
+    case "jar":
+      logger.info("Configuring ${project} (${POM_PACKAGING}) as jar project")
+
+      apply plugin: "java"
+      apply plugin: "java-library"
+      apply plugin: "kotlin"
+
+      /*
+       * Apply the Animal Sniffer plugin to check that code is Android compatible.
+       */
+
+      apply plugin: "ru.vyarus.animalsniffer"
+
+      dependencies {
+        signature "org.codehaus.mojo.signature:java16:1.1@signature"
+        signature "net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature"
+      }
+
+      /*
+       * Build an OSGi bundle.
+       */
+
+      apply plugin: "biz.aQute.bnd.builder"
+
+      jar {
+        bnd """
+Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
+
+-removeheaders: Bnd-LastModified, Tool, Private-Package
+"""
+      }
+      break
+
+    case "apk":
+      logger.info("Configuring ${project} (${POM_PACKAGING}) as Android application project")
+
+      apply plugin: "com.android.application"
+      apply plugin: "kotlin-android"
+
+      android {
+        compileSdkVersion androidCompileSDKVersion
+        buildToolsVersion androidBuildToolsVersion
+
+        defaultConfig {
+          minSdkVersion androidMinimumSDKVersion
+          targetSdkVersion androidTargetSDKVersion
+        }
+        compileOptions {
+          encoding 'UTF-8'
+          sourceCompatibility JavaVersion.VERSION_1_8
+          targetCompatibility JavaVersion.VERSION_1_8
+        }
+      }
+      break
+
+    case "aar":
+      logger.info("Configuring ${project} (${POM_PACKAGING}) as Android library project")
+
+      apply plugin: "com.android.library"
+      apply plugin: "kotlin-android"
+
+      android {
+        compileSdkVersion androidCompileSDKVersion
+        buildToolsVersion androidBuildToolsVersion
+
+        defaultConfig {
+          minSdkVersion androidMinimumSDKVersion
+          targetSdkVersion androidTargetSDKVersion
+          testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+          useLibrary 'org.apache.http.legacy'
+        }
+        compileOptions {
+          encoding 'UTF-8'
+          sourceCompatibility JavaVersion.VERSION_1_8
+          targetCompatibility JavaVersion.VERSION_1_8
+        }
+        testOptions {
+          execution 'ANDROIDX_TEST_ORCHESTRATOR'
+          animationsDisabled = true
+        }
+      }
+      break
+
+    default:
+      throw new IllegalStateException(
+        "Unrecognized packaging type ${POM_PACKAGING} for ${project}")
+  }
+
+  task javadocsJar(type: Jar) {
+    classifier = "javadoc"
+  }
+
+  task sourcesJar(type: Jar) {
+    classifier = "sources"
+    from "src/main/java", "src/main/resources"
+  }
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    google()
+
+    // Sonatype snapshots
+    maven {
+      url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+
+    if (useNYPLNexusDepend) {
+      maven {
+        credentials {
+          username findProperty("org.librarysimplified.nexus.username")
+          password findProperty("org.librarysimplified.nexus.password")
+        }
+        url "https://nexus.librarysimplified.org:8443/nexus/content/groups/external/"
+      }
+    }
+
+    maven { url "https://jitpack.io" }
+    jcenter()
+  }
+}
+
+// Configure publishing for appropriate projects
+configure(subprojects.findAll { !it.plugins.hasPlugin('com.android.application') }) { project ->
+  println("Configuring publishing for ${project} (${POM_PACKAGING})")
+  apply from: file("$rootDir/publishing.gradle")
+}
+
+// Add ktlint to all kotlin projects
+configure(subprojects.findAll {
+  it.plugins.hasPlugin('kotlin') || it.plugins.hasPlugin('kotlin-android')
+}) {
+  apply from: file("$rootDir/ktlint.gradle")
+}
