@@ -17,13 +17,14 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.6.3'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1"
     classpath "com.nabilhachicha:android-native-dependencies:0.1.2"
     classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.15.0"
     classpath "digital.wup:android-maven-publish:3.6.3"
     classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.21.2"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath 'com.android.tools.build:gradle:3.6.3'
+    classpath 'de.undercouch:gradle-download-task:4.0.4'
   }
 }
 
@@ -110,6 +111,7 @@ ext.libraries = [
 
 apply plugin: "io.codearte.nexus-staging"
 apply plugin: "com.vanniktech.android.junit.jacoco"
+apply plugin: "de.undercouch.download"
 
 nexusStaging {
   packageGroup = "org.librarysimplified"
@@ -117,14 +119,18 @@ nexusStaging {
   delayBetweenRetriesInMillis = 2000
 }
 
-allprojects {
+allprojects { project ->
   group = project.ext["GROUP"]
   version = project.ext["VERSION_NAME"]
+
+  configurations {
+    baselineVersioning
+  }
 }
 
 // Configure all projects
-
 subprojects { project ->
+
   switch (POM_PACKAGING) {
     case "jar":
       logger.info("Configuring ${project} (${POM_PACKAGING}) as jar project")
@@ -205,6 +211,82 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
         testOptions {
           execution 'ANDROIDX_TEST_ORCHESTRATOR'
           animationsDisabled = true
+        }
+      }
+
+      dependencies {
+        baselineVersioning(group: "${GROUP}", name: "${POM_ARTIFACT_ID}", configuration: 'default') {
+          version "${VERSION_NAME_PREVIOUS}"
+          transitive = false
+        }
+      }
+
+      afterEvaluate {
+        def scandoVersion = "0.0.1"
+        def scandoSHA256 = "a05706af51b504d125993af247b6567d5808dec39ea2a49f93b3770e299bd162"
+        def scandoSource = "https://repo1.maven.org/maven2/com/io7m/scando/com.io7m.scando.cmdline/${scandoVersion}/com.io7m.scando.cmdline-${scandoVersion}-main.jar"
+        def scandoTarget = "${project.rootDir}/build/bin/scando.jar"
+
+        task scandoMakeDirectories() {
+          mkdir "${project.rootDir}/build/bin/"
+          mkdir "${project.buildDir}/baseline/"
+        }
+
+        task scandoDownload(type: Download, dependsOn: scandoMakeDirectories) {
+          src scandoSource
+          dest scandoTarget
+          overwrite false
+        }
+
+        task scandoDownloadVerify(type: Verify, dependsOn: scandoDownload) {
+          src scandoTarget
+          checksum scandoSHA256
+          algorithm 'SHA-256'
+        }
+
+        task scandoUnzipBaseline(type: Copy) {
+          def baselineConfig = project.configurations.getByName("baselineVersioning")
+          def baselineFile = baselineConfig.singleFile
+          def outputDir = file("${buildDir}/baseline/")
+          from (zipTree(baselineFile)) {
+            rename { 'baseline-classes.jar' }
+          }
+          include 'classes.jar'
+          into outputDir
+        }
+
+        task scandoUnzipCurrent(type: Copy, dependsOn: assemble) {
+          def baselineFile = file("${buildDir}/outputs/aar/${POM_ARTIFACT_ID}-debug.aar")
+          def outputDir = file("${buildDir}/baseline/")
+          from (zipTree(baselineFile)) {
+            rename { 'current-classes.jar' }
+          }
+          include 'classes.jar'
+          into outputDir
+        }
+
+        task scandoAnalyze(type: Exec, dependsOn: [scandoUnzipBaseline, scandoUnzipCurrent, scandoDownloadVerify]) {
+          commandLine = [
+            "java",
+            "-jar",
+            scandoTarget,
+            "--oldJar",
+            "${buildDir}/baseline/baseline-classes.jar",
+            "--oldJarVersion",
+            "${VERSION_NAME_PREVIOUS}",
+            "--newJar",
+            "${buildDir}/baseline/current-classes.jar",
+            "--newJarVersion",
+            "${VERSION_NAME}",
+            "--textReport",
+            "${project.buildDir}/baseline/report.txt",
+            "--htmlReport",
+            "${project.buildDir}/baseline/report.html"
+          ]
+        }
+
+        task verifySemanticVersioning(dependsOn: [scandoAnalyze]) {
+
         }
       }
       break
