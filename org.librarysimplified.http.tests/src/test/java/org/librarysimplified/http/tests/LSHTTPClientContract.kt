@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Test
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.DELETE
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.HEAD
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.POST
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.PUT
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 import org.librarysimplified.http.vanilla.LSHTTPProblemReportParsers
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes
@@ -64,6 +68,110 @@ abstract class LSHTTPClientContract {
   }
 
   /**
+   * A HEAD request works.
+   */
+
+  @Test
+  fun testClientRequestHEAD() {
+    this.server.enqueue(MockResponse().setResponseCode(200))
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setMethod(HEAD)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+    }
+
+    val received = this.server.takeRequest()
+    Assertions.assertEquals("HEAD", received.method)
+    Assertions.assertEquals(0, received.bodySize)
+  }
+
+  /**
+   * A HEAD request works.
+   */
+
+  @Test
+  fun testClientRequestDELETE() {
+    this.server.enqueue(MockResponse().setResponseCode(200))
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setMethod(DELETE)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+    }
+
+    val received = this.server.takeRequest()
+    Assertions.assertEquals("DELETE", received.method)
+    Assertions.assertEquals(0, received.bodySize)
+  }
+
+  /**
+   * A POST request sends the body.
+   */
+
+  @Test
+  fun testClientRequestPOST() {
+    this.server.enqueue(MockResponse().setResponseCode(200))
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setMethod(POST)
+        .setBody("Hello.".toByteArray(), LSHTTPMimeTypes.textPlain)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+    }
+
+    val received = this.server.takeRequest()
+    Assertions.assertEquals("POST", received.method)
+    Assertions.assertEquals(6, received.bodySize)
+    Assertions.assertEquals(LSHTTPMimeTypes.textPlain.fullType, received.getHeader("content-type"))
+  }
+
+  /**
+   * A PUT request sends the body.
+   */
+
+  @Test
+  fun testClientRequestPUT() {
+    this.server.enqueue(MockResponse().setResponseCode(200))
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setMethod(PUT)
+        .setBody("Hello.".toByteArray(), LSHTTPMimeTypes.textPlain)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+    }
+
+    val received = this.server.takeRequest()
+    Assertions.assertEquals("PUT", received.method)
+    Assertions.assertEquals(6, received.bodySize)
+    Assertions.assertEquals(LSHTTPMimeTypes.textPlain.fullType, received.getHeader("content-type"))
+  }
+
+  /**
    * A 404 error code results in failure.
    */
 
@@ -89,10 +197,11 @@ abstract class LSHTTPClientContract {
 
   @Test
   fun testClientRequestContentTypeUnparseable() {
-    this.server.enqueue(MockResponse()
-      .setResponseCode(200)
-      .setHeader("content-type", "&gibberish ne cede malis")
-      .setBody("Hello.")
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setHeader("content-type", "&gibberish ne cede malis")
+        .setBody("Hello.")
     )
 
     val clients = this.clients()
@@ -140,7 +249,10 @@ abstract class LSHTTPClientContract {
       Assertions.assertEquals(500, status.status)
       Assertions.assertEquals("https://example.com/probs/out-of-credit", problemReport.type)
       Assertions.assertEquals("You do not have enough credit.", problemReport.title)
-      Assertions.assertEquals("Your current balance is 30, but that costs 50.", problemReport.detail)
+      Assertions.assertEquals(
+        "Your current balance is 30, but that costs 50.",
+        problemReport.detail
+      )
     }
   }
 

@@ -1,5 +1,7 @@
 package org.librarysimplified.http.api
 
+import one.irradia.mime.api.MIMEType
+
 /**
  * A mutable request builder.
  */
@@ -41,6 +43,35 @@ interface LSHTTPRequestBuilderType {
 
   fun allowRedirects(
     redirects: AllowRedirects
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * The HTTP method used.
+   */
+
+  enum class Method {
+    GET,
+    HEAD,
+    POST,
+    PUT,
+    DELETE
+  }
+
+  /**
+   * Set the HTTP method used. The default is [Method.GET].
+   */
+
+  fun setMethod(
+    method: Method
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Set the request body.
+   */
+
+  fun setBody(
+    body: ByteArray,
+    contentType: MIMEType
   ): LSHTTPRequestBuilderType
 
   /**
