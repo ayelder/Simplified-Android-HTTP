@@ -86,7 +86,8 @@ class LSHTTPRequest(
             contentLength = responseLength,
             problemReport = problemReport,
             message = responseMessage,
-            bodyStream = responseStream
+            bodyStream = responseStream,
+            headers = response.headers.toMultimap()
           )
         )
       } else {
@@ -100,7 +101,8 @@ class LSHTTPRequest(
             contentLength = responseLength,
             problemReport = problemReport,
             message = responseMessage,
-            bodyStream = responseStream
+            bodyStream = responseStream,
+            headers = response.headers.toMultimap()
           )
         )
       }

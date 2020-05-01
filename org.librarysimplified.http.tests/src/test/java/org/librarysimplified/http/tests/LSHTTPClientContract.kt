@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Delete
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
@@ -22,6 +23,7 @@ import java.io.File
 
 abstract class LSHTTPClientContract {
 
+  private lateinit var serverElsewhere: MockWebServer
   private lateinit var directory: File
   private lateinit var server: MockWebServer
   private lateinit var configuration: LSHTTPClientConfiguration
@@ -35,6 +37,7 @@ abstract class LSHTTPClientContract {
   fun testSetup() {
     this.context = Mockito.mock(Context::class.java)
     this.server = MockWebServer()
+    this.serverElsewhere = MockWebServer()
     this.directory = LSHTTPTestDirectories.createTempDirectory()
 
     this.configuration =
@@ -47,6 +50,7 @@ abstract class LSHTTPClientContract {
   @AfterEach
   fun testTearDown() {
     this.server.shutdown()
+    this.serverElsewhere.shutdown()
   }
 
   /**
@@ -315,5 +319,89 @@ abstract class LSHTTPClientContract {
       client.newRequest("urn:unusable")
         .build()
     }
+  }
+
+  /**
+   * Server redirects are followed.
+   */
+
+  @Test
+  fun testClientRequestRedirects() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello elsewhere.")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addHeader("Authorization", "Basic YTpiCg==")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(
+        "Hello elsewhere.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+    Assertions.assertEquals("Basic YTpiCg==", request0.getHeader("Authorization"))
+
+    val request1 = this.serverElsewhere.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals(null, request1.getHeader("Authorization"))
+  }
+
+  /**
+   * Server redirects are not followed if disabled.
+   */
+
+  @Test
+  fun testClientRequestRedirectsIgnored() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello elsewhere.")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addHeader("Authorization", "Basic YTpiCg==")
+        .allowRedirects(DISALLOW_REDIRECTS)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(301, status.status)
+      Assertions.assertEquals(
+        this.serverElsewhere.url("/abc").toString(),
+        status.header("Location")
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+    Assertions.assertEquals("Basic YTpiCg==", request0.getHeader("Authorization"))
+    Assertions.assertEquals(0, this.serverElsewhere.requestCount)
   }
 }

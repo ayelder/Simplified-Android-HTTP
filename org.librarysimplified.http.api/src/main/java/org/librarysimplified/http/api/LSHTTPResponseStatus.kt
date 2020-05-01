@@ -33,6 +33,22 @@ sealed class LSHTTPResponseStatus {
     abstract val problemReport: LSHTTPProblemReport?
     /** The stream of data returned as the HTTP response body */
     abstract val bodyStream: InputStream?
+    /** The headers returned */
+    abstract val headers: Map<String, List<String>>
+
+    /**
+     * The values for the given header, or the empty list if the header does not exist.
+     */
+
+    fun headerValues(name: String): List<String> =
+      this.headers[name] ?: listOf()
+
+    /**
+     * The first value for the given header, or `null` if the header does not exist.
+     */
+
+    fun header(name: String): String? =
+      this.headerValues(name).firstOrNull()
 
     /**
      * The server responded with a successful status code.
@@ -45,7 +61,8 @@ sealed class LSHTTPResponseStatus {
       override val contentType: MIMEType,
       override val contentLength: Long?,
       override val problemReport: LSHTTPProblemReport?,
-      override val bodyStream: InputStream?
+      override val bodyStream: InputStream?,
+      override val headers: Map<String, List<String>>
     ) : Responded()
 
     /**
@@ -59,7 +76,8 @@ sealed class LSHTTPResponseStatus {
       override val contentType: MIMEType,
       override val contentLength: Long?,
       override val problemReport: LSHTTPProblemReport?,
-      override val bodyStream: InputStream?
+      override val bodyStream: InputStream?,
+      override val headers: Map<String, List<String>>
     ) : Responded()
   }
 
