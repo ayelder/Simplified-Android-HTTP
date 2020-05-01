@@ -28,6 +28,7 @@ all codebases without duplicating code.
 * Optional integration with [Chucker](https://github.com/ChuckerTeam/chucker)
 * High-coverage automated test suite
 * Easily mocked, strongly-typed Kotlin API
+* API [Semantic Versioning](https://semver.org/spec/v2.0.0.html) enforced with [japicmp](https://github.com/siom79/japicmp)
 * Apache 2.0 license
 
 ### Building
@@ -93,7 +94,16 @@ is not required, but by automating the underlying repository operations,
 it eliminates the possibility of making mistakes, and keeps the various
 branches consistent.
 
-#### Modules
+### Versioning
+
+The API complies with [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html), and this
+is enforced using [japicmp](https://github.com/siom79/japicmp). The current version of the
+code is analyzed with respect to the previous version, and incompatible changes will
+require a major version increment. Please see the [VERSIONING.txt](VERSIONING.txt)
+file for the list of packages that are _exempt_ from versioning rules
+due to being private implementation packages.
+
+### Modules
 
 The project is heavily modularized in order to keep the separate components as loosely
 coupled as possible. New features should typically be implemented as new modules.
