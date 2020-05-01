@@ -1,5 +1,6 @@
 dependencies {
   api libraries.irradiaMimeAPI
+  api libraries.jacksonCore
 
   implementation libraries.kotlinStdlib
 }

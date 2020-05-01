@@ -74,6 +74,14 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
+   * Set the HTTP authorization.
+   */
+
+  fun setAuthorization(
+    authorization: LSHTTPAuthorizationType?
+  ): LSHTTPRequestBuilderType
+
+  /**
    * Build an immutable request based on the parameters given so far.
    */
 
