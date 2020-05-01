@@ -222,8 +222,8 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
       }
 
       afterEvaluate {
-        def scandoVersion = "0.0.1"
-        def scandoSHA256 = "a05706af51b504d125993af247b6567d5808dec39ea2a49f93b3770e299bd162"
+        def scandoVersion = "0.0.3"
+        def scandoSHA256 = "89a5ce633a4f3b81d6bdbb389523e1409bfcf3895e57e51f6880be1252dc289b"
         def scandoSource = "https://repo1.maven.org/maven2/com/io7m/scando/com.io7m.scando.cmdline/${scandoVersion}/com.io7m.scando.cmdline-${scandoVersion}-main.jar"
         def scandoTarget = "${project.rootDir}/build/bin/scando.jar"
 
@@ -270,6 +270,8 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
             "java",
             "-jar",
             scandoTarget,
+            "--excludeList",
+            "${project.rootDir}/VERSIONING.txt",
             "--oldJar",
             "${buildDir}/baseline/baseline-classes.jar",
             "--oldJarVersion",

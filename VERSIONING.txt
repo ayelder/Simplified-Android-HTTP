@@ -1,0 +1,11 @@
+#
+# This project follows Semantic Versioning.
+#
+# https://semver.org/spec/v2.0.0.html
+#
+# The Java packages listed in this file are NOT part of the public API and are subject
+# to change without warning.
+#
+
+org.librarysimplified.http.vanilla.internal
+org.librarysimplified.http.tests
