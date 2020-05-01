@@ -49,29 +49,28 @@ interface LSHTTPRequestBuilderType {
    * The HTTP method used.
    */
 
-  enum class Method {
-    GET,
-    HEAD,
-    POST,
-    PUT,
-    DELETE
+  sealed class Method {
+    object Get : Method()
+    object Head : Method()
+    object Delete : Method()
+
+    data class Post(
+      val body: ByteArray,
+      val contentType: MIMEType
+    ) : Method()
+
+    data class Put(
+      val body: ByteArray,
+      val contentType: MIMEType
+    ) : Method()
   }
 
   /**
-   * Set the HTTP method used. The default is [Method.GET].
+   * Set the HTTP method used. The default is [Method.Get].
    */
 
   fun setMethod(
     method: Method
-  ): LSHTTPRequestBuilderType
-
-  /**
-   * Set the request body.
-   */
-
-  fun setBody(
-    body: ByteArray,
-    contentType: MIMEType
   ): LSHTTPRequestBuilderType
 
   /**

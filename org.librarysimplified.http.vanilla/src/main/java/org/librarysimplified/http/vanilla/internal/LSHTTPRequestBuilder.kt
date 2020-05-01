@@ -3,15 +3,14 @@ package org.librarysimplified.http.vanilla.internal
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import one.irradia.mime.api.MIMEType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.DELETE
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.GET
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.HEAD
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.POST
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.PUT
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Delete
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Get
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
 import org.librarysimplified.http.api.LSHTTPRequestType
 
 class LSHTTPRequestBuilder(
@@ -19,9 +18,7 @@ class LSHTTPRequestBuilder(
   private val builder: Request.Builder
 ) : LSHTTPRequestBuilderType {
 
-  private var bodyContent: MIMEType? = null
-  private var body: ByteArray? = null
-  private var method: Method = GET
+  private var method: Method = Get
   private var redirects: AllowRedirects = AllowRedirects.ALLOW_REDIRECTS
 
   init {
@@ -50,40 +47,25 @@ class LSHTTPRequestBuilder(
     return this
   }
 
-  override fun setBody(
-    body: ByteArray,
-    contentType: MIMEType
-  ): LSHTTPRequestBuilderType {
-    this.body = body
-    this.bodyContent = contentType
-    return this
-  }
-
   override fun build(): LSHTTPRequestType {
-    when (this.method) {
-      GET -> {
-        this.body = null
-        this.bodyContent = null
+    when (val method = this.method) {
+      Get -> {
         this.builder.get()
       }
-      HEAD -> {
-        this.body = null
-        this.bodyContent = null
+      Head -> {
         this.builder.head()
       }
-      POST -> {
-        val bytes = this.body ?: ByteArray(0)
-        val type = this.bodyContent?.fullType ?: LSHTTPMimeTypes.octetStream.fullType
+      is Post -> {
+        val bytes = method.body
+        val type = method.contentType.fullType
         this.builder.post(bytes.toRequestBody(type.toMediaType()))
       }
-      PUT -> {
-        val bytes = this.body ?: ByteArray(0)
-        val type = this.bodyContent?.fullType ?: LSHTTPMimeTypes.octetStream.fullType
+      is Put -> {
+        val bytes = method.body
+        val type = method.contentType.fullType
         this.builder.put(bytes.toRequestBody(type.toMediaType()))
       }
-      DELETE -> {
-        this.body = null
-        this.bodyContent = null
+      Delete -> {
         this.builder.delete()
       }
     }

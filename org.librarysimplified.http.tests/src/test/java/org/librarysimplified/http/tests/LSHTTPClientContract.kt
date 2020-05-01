@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.DELETE
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.HEAD
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.POST
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.PUT
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Delete
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 import org.librarysimplified.http.vanilla.LSHTTPProblemReportParsers
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes
@@ -79,7 +79,7 @@ abstract class LSHTTPClientContract {
     val client = clients.create(this.context, this.configuration)
     val request =
       client.newRequest(this.server.url("/xyz").toString())
-        .setMethod(HEAD)
+        .setMethod(Head)
         .build()
 
     request.execute().use { response ->
@@ -104,7 +104,7 @@ abstract class LSHTTPClientContract {
     val client = clients.create(this.context, this.configuration)
     val request =
       client.newRequest(this.server.url("/xyz").toString())
-        .setMethod(DELETE)
+        .setMethod(Delete)
         .build()
 
     request.execute().use { response ->
@@ -129,8 +129,7 @@ abstract class LSHTTPClientContract {
     val client = clients.create(this.context, this.configuration)
     val request =
       client.newRequest(this.server.url("/xyz").toString())
-        .setMethod(POST)
-        .setBody("Hello.".toByteArray(), LSHTTPMimeTypes.textPlain)
+        .setMethod(Post("Hello.".toByteArray(), LSHTTPMimeTypes.textPlain))
         .build()
 
     request.execute().use { response ->
@@ -156,8 +155,7 @@ abstract class LSHTTPClientContract {
     val client = clients.create(this.context, this.configuration)
     val request =
       client.newRequest(this.server.url("/xyz").toString())
-        .setMethod(PUT)
-        .setBody("Hello.".toByteArray(), LSHTTPMimeTypes.textPlain)
+        .setMethod(Put("Hello.".toByteArray(), LSHTTPMimeTypes.textPlain))
         .build()
 
     request.execute().use { response ->
