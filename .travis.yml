@@ -9,9 +9,8 @@ android:
     - build-tools-28.0.3
     - android-28
 
-before_script: ./.travis-pre.sh
-
-script: ./.travis-build.sh
+script:
+  - ./.github/workflows/build.sh
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
