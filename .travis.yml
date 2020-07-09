@@ -10,9 +10,7 @@ android:
     - android-28
 
 script:
-  - ./.ci/pre.sh
-  - ./.ci/build.sh
-  - ./.ci/deploy.sh
+  - ./.ci/pre.sh && ./.ci/build.sh && ./.ci/deploy.sh
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
