@@ -74,6 +74,8 @@ mkdir -p "${DEPLOY_DIRECTORY}" || fatal "could not create a temporary directory"
 
 info "Executing build"
 ./gradlew \
+  -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
+  -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \
   -Porg.librarysimplified.directory.publish="${DEPLOY_DIRECTORY}" \
   -Dorg.gradle.internal.publish.checksums.insecure=true \
   publish || fatal "could not publish"
