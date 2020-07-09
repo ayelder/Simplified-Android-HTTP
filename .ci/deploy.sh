@@ -27,16 +27,16 @@ info()
 VERSION_NAME=$(./.ci/version.sh) || fatal "could not determine project version"
 VERSION_TYPE=none
 
-echo "${VERSION_NAME}" | egrep '-SNAPSHOT$'
+echo "${VERSION_NAME}" | egrep -- '-SNAPSHOT$'
 if [ $# -eq 0 ]
 then
   VERSION_TYPE=snapshot
-fi
-
-VERSION_TAG=$(git describe --tags HEAD --exact-match 2>/dev/null)
-if [ ! -z "${VERSION_TAG}" ]
-then
-  VERSION_TYPE=tag
+else
+  VERSION_TAG=$(git describe --tags HEAD --exact-match 2>/dev/null)
+  if [ -n "${VERSION_TAG}" ]
+  then
+    VERSION_TYPE=tag
+  fi
 fi
 
 #------------------------------------------------------------------------

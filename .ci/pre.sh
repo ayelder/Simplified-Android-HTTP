@@ -21,6 +21,22 @@ info()
 }
 
 #------------------------------------------------------------------------
+# Check environment
+
+if [ -n "${MAVEN_CENTRAL_USERNAME}" ]
+then
+  fatal "MAVEN_CENTRAL_USERNAME is not defined"
+fi
+if [ -n "${MAVEN_CENTRAL_PASSWORD}" ]
+then
+  fatal "MAVEN_CENTRAL_PASSWORD is not defined"
+fi
+if [ -n "${MAVEN_CENTRAL_STAGING_PROFILE_ID}" ]
+then
+  fatal "MAVEN_CENTRAL_STAGING_PROFILE_ID is not defined"
+fi
+
+#------------------------------------------------------------------------
 # Download Brooklime if necessary.
 #
 
