@@ -54,6 +54,8 @@ then
   info "Current version is a snapshot (${VERSION_NAME})"
   info "Executing build"
   ./gradlew \
+    -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
+    -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \
     -Dorg.gradle.internal.publish.checksums.insecure=true \
     publish || fatal "could not publish snapshot"
   exit 0
