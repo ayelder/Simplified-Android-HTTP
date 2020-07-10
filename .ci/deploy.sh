@@ -67,7 +67,6 @@ then
 fi
 
 info "Current version is a tag (${VERSION_TAG})"
-info "Executing build"
 
 DEPLOY_DIRECTORY="$(pwd)/deploy"
 info "Artifacts will temporarily be deployed to ${DEPLOY_DIRECTORY}"
