@@ -78,9 +78,19 @@ info "Executing build"
 ./gradlew \
   -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
   -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \
+  -Psigning.gnupg.executable=gpg \
+  -Psigning.gnupg.useLegacyGpg=false \
+  -Psigning.gnupg.keyName="${MAVEN_CENTRAL_SIGNING_KEY_ID}" \
   -Porg.librarysimplified.directory.publish="${DEPLOY_DIRECTORY}" \
   -Dorg.gradle.internal.publish.checksums.insecure=true \
   publish || fatal "could not publish"
+
+info "Checking signatures were created"
+SIGNATURE_COUNT=$(find "${DEPLOY_DIRECTORY}" -type f -name '*.asc' | wc -l) || fatal "could not list signatures"
+if [ "${SIGNATURE_COUNT}" -lt 2 ]
+then
+  fatal "too few signatures were produced! check the Gradle/PGP setup!"
+fi
 
 #------------------------------------------------------------------------
 # Create a staging repository on Maven Central.
