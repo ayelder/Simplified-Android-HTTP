@@ -27,8 +27,8 @@ info()
 VERSION_NAME=$(./.ci/version.sh) || fatal "could not determine project version"
 VERSION_TYPE=none
 
-echo "${VERSION_NAME}" | egrep -- '-SNAPSHOT$'
-if [ $# -eq 0 ]
+echo "${VERSION_NAME}" | grep -E -- '-SNAPSHOT$'
+if [ $? -eq 0 ]
 then
   VERSION_TYPE=snapshot
 else
