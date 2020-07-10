@@ -87,6 +87,7 @@ info "Executing build"
 
 info "Checking signatures were created"
 SIGNATURE_COUNT=$(find "${DEPLOY_DIRECTORY}" -type f -name '*.asc' | wc -l) || fatal "could not list signatures"
+info "Generated ${SIGNATURE_COUNT} signatures"
 if [ "${SIGNATURE_COUNT}" -lt 2 ]
 then
   fatal "too few signatures were produced! check the Gradle/PGP setup!"
@@ -131,6 +132,7 @@ ${MAVEN_CENTRAL_PASSWORD}
 ${DEPLOY_DIRECTORY}
 --repository
 ${MAVEN_CENTRAL_STAGING_REPOSITORY_ID}
+--quiet
 EOF
 ) > args.txt || fatal "Could not write argument file"
 

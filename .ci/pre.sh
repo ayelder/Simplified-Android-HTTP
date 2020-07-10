@@ -73,13 +73,11 @@ gpg --sign -a hello.txt || fatal "could not produce test signature"
 # Download Brooklime if necessary.
 #
 
-BROOKLIME_URL="https://repo1.maven.org/maven2/com/io7m/brooklime/com.io7m.brooklime.cmdline/0.0.2/com.io7m.brooklime.cmdline-0.0.2-main.jar"
-BROOKLIME_SHA256_EXPECTED="abd775e9decd228e543c7ff1f9899183c57cc8b98e1b233e7d46ca03f4ee7e97"
+BROOKLIME_URL="https://repo1.maven.org/maven2/com/io7m/brooklime/com.io7m.brooklime.cmdline/0.1.0/com.io7m.brooklime.cmdline-0.1.0-main.jar"
+BROOKLIME_SHA256_EXPECTED="d706dee5ce6be4992d35b3d61094872e194b7f8f3ad798a845ceb692a8ac8fcd"
 
-if [ ! -f "brooklime.jar" ]
-then
-  wget -O "brooklime.jar" "${BROOKLIME_URL}" || fatal "could not download brooklime"
-fi
+wget -O "brooklime.jar.tmp" "${BROOKLIME_URL}" || fatal "could not download brooklime"
+mv "brooklime.jar.tmp" "brooklime.jar" || fatal "could not rename brooklime"
 
 BROOKLIME_SHA256_RECEIVED=$(openssl sha256 "brooklime.jar" | awk '{print $NF}') || fatal "could not checksum brooklime.jar"
 
