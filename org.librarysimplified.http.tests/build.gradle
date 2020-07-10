@@ -1,0 +1,11 @@
+dependencies {
+  implementation project(":org.librarysimplified.http.api")
+  implementation project(":org.librarysimplified.http.vanilla")
+
+  implementation libraries.junitJupiterAPI
+  implementation libraries.junitJupiterEngine
+  implementation libraries.kotlinStdlib
+  implementation libraries.logbackClassic
+  implementation libraries.mockitoAndroid
+  implementation libraries.mockWebServer
+}
