@@ -1,7 +1,7 @@
 Simplified-Android-HTTP
 =======================
 
-[![Build Status](https://img.shields.io/travis/com/NYPL-Simplified/Simplified-Android-HTTP?style=flat-square)](https://www.travis-ci.com/NYPL-Simplified/Simplified-Android-HTTP)
+[![Build Status](https://img.shields.io/github/workflow/status/NYPL-Simplified/Simplified-Android-HTTP/Android%20CI?style=flat-square)](https://github.com/NYPL-Simplified/Simplified-Android-HTTP/actions?query=workflow%3A%22Android+CI%22)
 [![Maven Central](https://img.shields.io/maven-central/v/org.librarysimplified.http/org.librarysimplified.http.api?style=flat-square)](https://repo2.maven.org/maven2/org/librarysimplified/http)
 [![Maven Central (snapshot)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.librarysimplified.http/org.librarysimplified.http.api.svg?style=flat-square)](https://oss.sonatype.org/content/repositories/snapshots/org.librarysimplified.http/)
 
