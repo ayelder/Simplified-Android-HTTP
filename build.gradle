@@ -357,12 +357,14 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
         }
       }
 
-      maven {
-        url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        name = "SonatypeSnapshots"
-        credentials(PasswordCredentials) {
-          username mavenCentralUsername
-          password mavenCentralPassword
+      if (version.endsWith("-SNAPSHOT")) {
+        maven {
+          url = "https://oss.sonatype.org/content/repositories/snapshots/"
+          name = "SonatypeSnapshots"
+          credentials(PasswordCredentials) {
+            username mavenCentralUsername
+            password mavenCentralPassword
+          }
         }
       }
     }
