@@ -7,9 +7,9 @@ exec &> >(tee -a ".ci/deploy.log")
 
 fatal()
 {
-  echo "fatal: $1" 1>&2
+  echo "deploy.sh: fatal: $1" 1>&2
   echo
-  echo "dumping log: " 1>&2
+  echo "deploy.sh: dumping log: " 1>&2
   echo
   cat .ci/deploy.log
   exit 1
@@ -17,7 +17,7 @@ fatal()
 
 info()
 {
-  echo "info: $1" 1>&2
+  echo "deploy.sh: info: $1" 1>&2
 }
 
 #------------------------------------------------------------------------
@@ -52,10 +52,13 @@ fi
 if [ "${VERSION_TYPE}" = "snapshot" ]
 then
   info "Current version is a snapshot (${VERSION_NAME})"
-  info "Executing build"
+  info "Executing snapshot deployment"
   ./gradlew \
     -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
     -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \
+    -Psigning.gnupg.executable=gpg \
+    -Psigning.gnupg.useLegacyGpg=false \
+    -Psigning.gnupg.keyName="${MAVEN_CENTRAL_SIGNING_KEY_ID}" \
     -Dorg.gradle.internal.publish.checksums.insecure=true \
     publish || fatal "could not publish snapshot"
   exit 0
@@ -67,14 +70,13 @@ then
 fi
 
 info "Current version is a tag (${VERSION_TAG})"
-info "Executing build"
 
 DEPLOY_DIRECTORY="$(pwd)/deploy"
 info "Artifacts will temporarily be deployed to ${DEPLOY_DIRECTORY}"
 rm -rf "${DEPLOY_DIRECTORY}" || fatal "could not ensure temporary directory is clean"
 mkdir -p "${DEPLOY_DIRECTORY}" || fatal "could not create a temporary directory"
 
-info "Executing build"
+info "Executing tagged release deployment"
 ./gradlew \
   -PmavenCentralUsername="${MAVEN_CENTRAL_USERNAME}" \
   -PmavenCentralPassword="${MAVEN_CENTRAL_PASSWORD}" \

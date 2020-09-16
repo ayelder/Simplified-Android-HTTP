@@ -7,9 +7,9 @@ exec &> >(tee -a ".ci/build.log")
 
 fatal()
 {
-  echo "fatal: $1" 1>&2
+  echo "build.sh: fatal: $1" 1>&2
   echo
-  echo "dumping log: " 1>&2
+  echo "build.sh: dumping log: " 1>&2
   echo
   cat .ci/build.log
   exit 1
@@ -17,7 +17,7 @@ fatal()
 
 info()
 {
-  echo "info: $1" 1>&2
+  echo "build.sh: info: $1" 1>&2
 }
 
 #------------------------------------------------------------------------
@@ -27,4 +27,4 @@ info()
 info "Executing build"
 ./gradlew \
   -Dorg.gradle.internal.publish.checksums.insecure=true \
-  clean assemble test verifySemanticVersioning || fatal "could not build"
+  clean assemble ktlint test verifySemanticVersioning || fatal "could not build"

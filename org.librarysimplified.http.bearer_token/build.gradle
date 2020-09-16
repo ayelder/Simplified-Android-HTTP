@@ -1,0 +1,16 @@
+dependencies {
+  api project(":org.librarysimplified.http.api")
+  api project(":org.librarysimplified.http.vanilla")
+
+  implementation libraries.jacksonDatabind
+  implementation libraries.jodaTime
+  implementation libraries.kotlinStdlib
+  implementation libraries.okhttp
+  implementation libraries.slf4j
+}
+
+android {
+  defaultConfig {
+    buildConfigField "String", "BEARER_TOKEN_VERSION_NAME", "\"${VERSION_NAME}\""
+  }
+}

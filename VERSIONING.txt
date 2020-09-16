@@ -11,5 +11,6 @@
 #   ./gradlew verifySemanticVersioning
 #
 
+org.librarysimplified.http.bearer_token.internal
 org.librarysimplified.http.vanilla.internal
 org.librarysimplified.http.tests

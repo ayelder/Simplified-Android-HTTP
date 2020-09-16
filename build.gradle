@@ -17,11 +17,11 @@ buildscript {
   }
 
   dependencies {
-    classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.1"
+    classpath "biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2"
     classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
     classpath "digital.wup:android-maven-publish:3.6.3"
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    classpath "com.android.tools.build:gradle:4.0.0"
+    classpath "com.android.tools.build:gradle:4.0.1"
     classpath "de.undercouch:gradle-download-task:4.0.4"
   }
 }
@@ -232,7 +232,7 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
           def baselineConfig = project.configurations.getByName("baselineVersioning")
           def baselineFile = baselineConfig.singleFile
           def outputDir = file("${buildDir}/baseline/")
-          from (zipTree(baselineFile)) {
+          from(zipTree(baselineFile)) {
             rename { 'baseline-classes.jar' }
           }
           include 'classes.jar'
@@ -242,7 +242,7 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
         task scandoUnzipCurrent(type: Copy, dependsOn: assemble) {
           def baselineFile = file("${buildDir}/outputs/aar/${POM_ARTIFACT_ID}-debug.aar")
           def outputDir = file("${buildDir}/baseline/")
-          from (zipTree(baselineFile)) {
+          from(zipTree(baselineFile)) {
             rename { 'current-classes.jar' }
           }
           include 'classes.jar'
@@ -307,14 +307,18 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
 }
 
 // Configure publishing for appropriate projects
-configure(subprojects.findAll { !it.plugins.hasPlugin('com.android.application') }) { project ->
-  println("Configuring publishing for ${project} (${POM_PACKAGING})")
-  apply from: file("$rootDir/publishing.gradle")
+subprojects { project ->
+  pluginManager.withPlugin("java") {
+    println("Configuring publishing for ${project} (${POM_PACKAGING})")
+    apply from: file("$rootDir/publishing.gradle")
+  }
+  pluginManager.withPlugin("com.android.library") {
+    println("Configuring publishing for ${project} (${POM_PACKAGING})")
+    apply from: file("$rootDir/publishing.gradle")
+  }
 }
 
-// Add ktlint to all kotlin projects
-configure(subprojects.findAll {
-  it.plugins.hasPlugin('kotlin') || it.plugins.hasPlugin('kotlin-android')
-}) {
-  apply from: file("$rootDir/ktlint.gradle")
-}
+// Add ktlint tasks to root project. This executes faster than configuring
+// the tasks for each subproject individually.
+apply from: file("$rootDir/ktlint.gradle")
+

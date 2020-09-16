@@ -76,7 +76,7 @@ publishing {
 
   repositories {
     if (useDirectoryPublish) {
-      logger.info("Using ${useDirectoryPublishPath} for publication")
+      logger.info("using ${useDirectoryPublishPath} for publication")
 
       maven {
         name = "Directory"
@@ -84,14 +84,13 @@ publishing {
       }
     }
 
-    if (version.endsWith("SNAPSHOT")) {
-      logger.info("Using Sonatype snapshots repository for publication")
-      maven {
-        url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        credentials(PasswordCredentials) {
-          username mavenCentralUsername
-          password mavenCentralPassword
-        }
+    maven {
+      def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+      def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+      url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+      credentials(PasswordCredentials) {
+        username mavenCentralUsername
+        password mavenCentralPassword
       }
     }
   }

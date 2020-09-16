@@ -1,7 +1,7 @@
 Simplified-Android-HTTP
 =======================
 
-[![Build Status](https://img.shields.io/travis/com/NYPL-Simplified/Simplified-Android-HTTP?style=flat-square)](https://www.travis-ci.com/NYPL-Simplified/Simplified-Android-HTTP)
+[![Build Status](https://img.shields.io/github/workflow/status/NYPL-Simplified/Simplified-Android-HTTP/Android%20CI?style=flat-square)](https://github.com/NYPL-Simplified/Simplified-Android-HTTP/actions?query=workflow%3A%22Android+CI%22)
 [![Maven Central](https://img.shields.io/maven-central/v/org.librarysimplified.http/org.librarysimplified.http.api?style=flat-square)](https://repo2.maven.org/maven2/org/librarysimplified/http)
 [![Maven Central (snapshot)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.librarysimplified.http/org.librarysimplified.http.api.svg?style=flat-square)](https://oss.sonatype.org/content/repositories/snapshots/org.librarysimplified.http/)
 
@@ -26,6 +26,7 @@ all codebases without duplicating code.
 * Automatic [RFC7807](https://tools.ietf.org/html/rfc7807) problem report parsing
 * Control over redirects
 * Optional integration with [Chucker](https://github.com/ChuckerTeam/chucker)
+* Optional transparent handling of [Library Simplified Bearer Tokens](https://github.com/NYPL-Simplified/Simplified/wiki/OPDSForDistributors#how-it-works)
 * High-coverage automated test suite
 * Easily mocked, strongly-typed Kotlin API
 * API [Semantic Versioning](https://semver.org/spec/v2.0.0.html) enforced with [japicmp](https://github.com/siom79/japicmp)
@@ -111,6 +112,7 @@ coupled as possible. New features should typically be implemented as new modules
 |Module|Description|
 |------|-----------|
 |[org.librarysimplified.http.api](org.librarysimplified.http.api)|Library Simplified HTTP client (API)|
+|[org.librarysimplified.http.bearer_token](org.librarysimplified.http.bearer_token)|Library Simplified HTTP client (Bearer token extension)|
 |[org.librarysimplified.http.chucker](org.librarysimplified.http.chucker)|Library Simplified HTTP client (Chucker extension)|
 |[org.librarysimplified.http.tests](org.librarysimplified.http.tests)|Library Simplified HTTP client (Test suite)|
 |[org.librarysimplified.http.vanilla](org.librarysimplified.http.vanilla)|Library Simplified HTTP client (Vanilla implementation)|
