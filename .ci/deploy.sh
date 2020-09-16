@@ -39,6 +39,8 @@ else
   fi
 fi
 
+info "version to be deployed is ${VERSION_NAME}"
+
 #------------------------------------------------------------------------
 # Publish the built artifacts to wherever they need to go.
 #

@@ -106,10 +106,6 @@ apply plugin: "de.undercouch.download"
 allprojects { project ->
   group = project.ext["GROUP"]
   version = project.ext["VERSION_NAME"]
-
-  configurations {
-    baselineVersioning
-  }
 }
 
 // Configure all projects
@@ -117,7 +113,7 @@ subprojects { project ->
 
   switch (POM_PACKAGING) {
     case "jar":
-      logger.info("Configuring ${project} (${POM_PACKAGING}) as jar project")
+      logger.info("Configuring ${project} ${version} (${POM_PACKAGING}) as jar project")
 
       apply plugin: "java"
       apply plugin: "java-library"
@@ -150,7 +146,7 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
       break
 
     case "apk":
-      logger.info("Configuring ${project} (${POM_PACKAGING}) as Android application project")
+      logger.info("Configuring ${project} ${version} (${POM_PACKAGING}) as Android application project")
 
       apply plugin: "com.android.application"
       apply plugin: "kotlin-android"
@@ -172,7 +168,7 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
       break
 
     case "aar":
-      logger.info("Configuring ${project} (${POM_PACKAGING}) as Android library project")
+      logger.info("Configuring ${project} ${version} (${POM_PACKAGING}) as Android library project")
 
       apply plugin: "com.android.library"
       apply plugin: "kotlin-android"
@@ -198,22 +194,16 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
         }
       }
 
-      dependencies {
-        baselineVersioning(group: "${GROUP}", name: "${POM_ARTIFACT_ID}", configuration: 'default') {
-          version "${VERSION_NAME_PREVIOUS}"
-          transitive = false
-        }
-      }
-
       afterEvaluate {
-        def scandoVersion = "0.0.3"
-        def scandoSHA256 = "89a5ce633a4f3b81d6bdbb389523e1409bfcf3895e57e51f6880be1252dc289b"
+        def scandoVersion = "0.0.4"
+        def scandoSHA256 = "5122bd528ab927801cb848329dc42db0f7603ab1704573632a1890a9b8acb10c"
         def scandoSource = "https://repo1.maven.org/maven2/com/io7m/scando/com.io7m.scando.cmdline/${scandoVersion}/com.io7m.scando.cmdline-${scandoVersion}-main.jar"
         def scandoTarget = "${project.rootDir}/build/bin/scando.jar"
+        def scandoBaselineDir = "${project.buildDir}/baseline/"
 
         task scandoMakeDirectories() {
           mkdir "${project.rootDir}/build/bin/"
-          mkdir "${project.buildDir}/baseline/"
+          mkdir "${scandoBaselineDir}"
         }
 
         task scandoDownload(type: Download, dependsOn: scandoMakeDirectories) {
@@ -228,28 +218,18 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
           algorithm 'SHA-256'
         }
 
-        task scandoUnzipBaseline(type: Copy) {
-          def baselineConfig = project.configurations.getByName("baselineVersioning")
-          def baselineFile = baselineConfig.singleFile
-          def outputDir = file("${buildDir}/baseline/")
-          from(zipTree(baselineFile)) {
-            rename { 'baseline-classes.jar' }
-          }
-          include 'classes.jar'
-          into outputDir
+        task scandoDownloadBaseline(type: Download, dependsOn: scandoMakeDirectories) {
+          def oldGroup = "${project.group}".replace('.', '/')
+          def oldPath = "${oldGroup}/${POM_ARTIFACT_ID}/${VERSION_PREVIOUS}/${POM_ARTIFACT_ID}-${VERSION_PREVIOUS}.aar"
+          def oldUrl = "https://repo1.maven.org/maven2/${oldPath}"
+          def output = file("${scandoBaselineDir}/${POM_ARTIFACT_ID}-${VERSION_PREVIOUS}.aar")
+
+          src oldUrl
+          dest output
+          overwrite false
         }
 
-        task scandoUnzipCurrent(type: Copy, dependsOn: assemble) {
-          def baselineFile = file("${buildDir}/outputs/aar/${POM_ARTIFACT_ID}-debug.aar")
-          def outputDir = file("${buildDir}/baseline/")
-          from(zipTree(baselineFile)) {
-            rename { 'current-classes.jar' }
-          }
-          include 'classes.jar'
-          into outputDir
-        }
-
-        task scandoAnalyze(type: Exec, dependsOn: [scandoUnzipBaseline, scandoUnzipCurrent, scandoDownloadVerify]) {
+        task scandoAnalyze(type: Exec, dependsOn: [scandoDownloadBaseline, scandoDownloadVerify, assembleDebug]) {
           commandLine = [
             "java",
             "-jar",
@@ -257,11 +237,11 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
             "--excludeList",
             "${project.rootDir}/VERSIONING.txt",
             "--oldJar",
-            "${buildDir}/baseline/baseline-classes.jar",
+            "${scandoBaselineDir}/${POM_ARTIFACT_ID}-${VERSION_PREVIOUS}.${POM_PACKAGING}",
             "--oldJarVersion",
-            "${VERSION_NAME_PREVIOUS}",
+            "${VERSION_PREVIOUS}",
             "--newJar",
-            "${buildDir}/baseline/current-classes.jar",
+            "${buildDir}/outputs/aar/${POM_ARTIFACT_ID}-debug.aar",
             "--newJarVersion",
             "${VERSION_NAME}",
             "--textReport",
@@ -291,6 +271,108 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
     from "src/main/java", "src/main/resources"
   }
 
+  apply plugin: "digital.wup.android-maven-publish"
+  apply plugin: "signing"
+
+  publishing {
+    publications {
+      basicJar(MavenPublication) {
+        switch (POM_PACKAGING) {
+          case "jar":
+            from components.java
+            break
+
+          case "aar":
+            from components.android
+            break
+        }
+
+        artifact sourcesJar
+        artifact javadocsJar
+
+        pom {
+          artifactId = POM_ARTIFACT_ID
+          name = POM_NAME
+          packaging = POM_PACKAGING
+          description = POM_DESCRIPTION
+          url = POM_URL
+
+          scm {
+            connection = POM_SCM_CONNECTION
+            developerConnection = POM_SCM_DEV_CONNECTION
+            url = POM_SCM_URL
+          }
+
+          licenses {
+            license {
+              name = POM_LICENCE_NAME
+              url = POM_LICENCE_URL
+            }
+          }
+
+          developers {
+            developer {
+              id = "io7m"
+              name = "Mark Raynsford"
+              email = "code@io7m.com"
+              url = "https://www.io7m.com"
+            }
+            developer {
+              id = "winniequinn"
+              name = "Winnie Quinn"
+              url = "https://www.winniequinn.com/"
+            }
+            developer {
+              id = "gioneill"
+              name = "Greg O'Neill"
+              url = "https://github.com/gioneill"
+            }
+            developer {
+              id = "mattniehoff"
+              name = "Matt Niehoff"
+              url = "https://github.com/mattniehoff"
+            }
+            developer {
+              id = "MalcolmMcFly"
+              name = "Malcolm Woods"
+              url = "https://github.com/MalcolmMcFly"
+            }
+            developer {
+              id = "twaddington"
+              name = "Tristan Waddington"
+              url = "https://github.com/twaddington"
+            }
+          }
+        }
+      }
+    }
+
+    repositories {
+      if (useDirectoryPublish) {
+        logger.info("using ${useDirectoryPublishPath} for publication")
+
+        maven {
+          name = "Directory"
+          url = "file://${useDirectoryPublishPath}"
+        }
+      }
+
+      maven {
+        url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        name = "SonatypeSnapshots"
+        credentials(PasswordCredentials) {
+          username mavenCentralUsername
+          password mavenCentralPassword
+        }
+      }
+    }
+  }
+
+  signing {
+    useGpgCmd()
+    sign publishing.publications.basicJar
+  }
+
   repositories {
     mavenLocal()
     mavenCentral()
@@ -306,19 +388,6 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
   }
 }
 
-// Configure publishing for appropriate projects
-subprojects { project ->
-  pluginManager.withPlugin("java") {
-    println("Configuring publishing for ${project} (${POM_PACKAGING})")
-    apply from: file("$rootDir/publishing.gradle")
-  }
-  pluginManager.withPlugin("com.android.library") {
-    println("Configuring publishing for ${project} (${POM_PACKAGING})")
-    apply from: file("$rootDir/publishing.gradle")
-  }
-}
-
 // Add ktlint tasks to root project. This executes faster than configuring
 // the tasks for each subproject individually.
 apply from: file("$rootDir/ktlint.gradle")
-
