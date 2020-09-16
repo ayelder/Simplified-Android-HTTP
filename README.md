@@ -26,7 +26,7 @@ all codebases without duplicating code.
 * Automatic [RFC7807](https://tools.ietf.org/html/rfc7807) problem report parsing
 * Control over redirects
 * Optional integration with [Chucker](https://github.com/ChuckerTeam/chucker)
-* Optional transparent handling of Library Simplified Bearer Tokens
+* Optional transparent handling of [Library Simplified Bearer Tokens](https://github.com/NYPL-Simplified/Simplified/wiki/OPDSForDistributors#how-it-works)
 * High-coverage automated test suite
 * Easily mocked, strongly-typed Kotlin API
 * API [Semantic Versioning](https://semver.org/spec/v2.0.0.html) enforced with [japicmp](https://github.com/siom79/japicmp)
