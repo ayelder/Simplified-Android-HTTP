@@ -220,9 +220,9 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
 
         task scandoDownloadBaseline(type: Download, dependsOn: scandoMakeDirectories) {
           def oldGroup = "${project.group}".replace('.', '/')
-          def oldPath = "${oldGroup}/${POM_ARTIFACT_ID}/${SEMANTIC_VERSIONING_PREVIOUS}/${POM_ARTIFACT_ID}-${SEMANTIC_VERSIONING_PREVIOUS}.aar"
+          def oldPath = "${oldGroup}/${POM_ARTIFACT_ID}/${VERSION_PREVIOUS}/${POM_ARTIFACT_ID}-${VERSION_PREVIOUS}.aar"
           def oldUrl = "https://repo1.maven.org/maven2/${oldPath}"
-          def output = file("${scandoBaselineDir}/${POM_ARTIFACT_ID}-${SEMANTIC_VERSIONING_PREVIOUS}.aar")
+          def output = file("${scandoBaselineDir}/${POM_ARTIFACT_ID}-${VERSION_PREVIOUS}.aar")
 
           src oldUrl
           dest output
@@ -237,9 +237,9 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
             "--excludeList",
             "${project.rootDir}/VERSIONING.txt",
             "--oldJar",
-            "${scandoBaselineDir}/${POM_ARTIFACT_ID}-${SEMANTIC_VERSIONING_PREVIOUS}.${POM_PACKAGING}",
+            "${scandoBaselineDir}/${POM_ARTIFACT_ID}-${VERSION_PREVIOUS}.${POM_PACKAGING}",
             "--oldJarVersion",
-            "${SEMANTIC_VERSIONING_PREVIOUS}",
+            "${VERSION_PREVIOUS}",
             "--newJar",
             "${buildDir}/outputs/aar/${POM_ARTIFACT_ID}-debug.aar",
             "--newJarVersion",
