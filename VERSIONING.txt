@@ -12,5 +12,6 @@
 #
 
 org.librarysimplified.http.bearer_token.internal
-org.librarysimplified.http.vanilla.internal
+org.librarysimplified.http.downloads.internal
 org.librarysimplified.http.tests
+org.librarysimplified.http.vanilla.internal
