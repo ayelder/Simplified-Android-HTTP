@@ -13,6 +13,9 @@ import java.io.InputStream
 
 sealed class LSHTTPResponseStatus {
 
+  /** The RFC7807 problem report, if one was provided. */
+  abstract val problemReport: LSHTTPProblemReport?
+
   /**
    * The type of responses that indicate the server returned something.
    */
@@ -29,8 +32,6 @@ sealed class LSHTTPResponseStatus {
     abstract val contentType: MIMEType
     /** The length of the content, if available. */
     abstract val contentLength: Long?
-    /** The RFC7807 problem report, if one was provided. */
-    abstract val problemReport: LSHTTPProblemReport?
     /** The stream of data returned as the HTTP response body */
     abstract val bodyStream: InputStream?
     /** The headers returned */
@@ -87,5 +88,8 @@ sealed class LSHTTPResponseStatus {
 
   data class Failed(
     val exception: Exception
-  ) : LSHTTPResponseStatus()
+  ) : LSHTTPResponseStatus() {
+    override val problemReport: LSHTTPProblemReport? =
+      null
+  }
 }
