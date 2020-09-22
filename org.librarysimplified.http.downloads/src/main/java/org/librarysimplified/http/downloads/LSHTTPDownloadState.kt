@@ -61,7 +61,7 @@ sealed class LSHTTPDownloadState {
        */
 
       data class DownloadFailedServer(
-        override val responseStatus: LSHTTPResponseStatus
+        override val responseStatus: LSHTTPResponseStatus.Responded
       ) : DownloadFailed()
 
       /**
