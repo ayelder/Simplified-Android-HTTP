@@ -19,6 +19,7 @@ import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 import org.librarysimplified.http.vanilla.LSHTTPProblemReportParsers
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes
+import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes.octetStream
 import org.mockito.Mockito
 import java.io.File
 
@@ -216,7 +217,7 @@ abstract class LSHTTPClientContract {
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
       Assertions.assertEquals(200, status.status)
-      Assertions.assertEquals(LSHTTPMimeTypes.octetStream.fullType, status.contentType.fullType)
+      Assertions.assertEquals(octetStream.fullType, status.contentType.fullType)
       Assertions.assertArrayEquals("Hello.".toByteArray(), status.bodyStream!!.readBytes())
     }
   }
@@ -432,5 +433,49 @@ abstract class LSHTTPClientContract {
     val request0 = this.server.takeRequest()
     Assertions.assertEquals("GET", request0.method)
     Assertions.assertEquals("Basic YTpi", request0.getHeader("Authorization"))
+  }
+
+  /**
+   * Server redirects are followed for PUT.
+   */
+
+  @Test
+  fun testClientRequestRedirectsPUT() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello elsewhere.")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(302)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setMethod(Put(ByteArray(0), octetStream))
+        .addHeader("Authorization", "Basic YTpiCg==")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(
+        "Hello elsewhere.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("PUT", request0.method)
+    Assertions.assertEquals("Basic YTpiCg==", request0.getHeader("Authorization"))
+
+    val request1 = this.serverElsewhere.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals(null, request1.getHeader("Authorization"))
   }
 }

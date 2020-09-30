@@ -23,15 +23,37 @@ class LSHTTPBearerTokenInterceptor : Interceptor {
           body.byteStream()
             .use(LSSimplifiedBearerTokenJSON::deserializeFromStream)
 
-        val newRequest =
+        val newRequest0 =
           originalRequest
             .newBuilder()
             .header("Authorization", "Bearer ${token.accessToken}")
             .url(token.location.toString())
             .build()
 
-        this.logger.debug("sending a new request to {}", newRequest.url)
-        chain.proceed(newRequest)
+        this.logger.debug("sending a new request to {}", newRequest0.url)
+        val innerResponse = chain.proceed(newRequest0)
+
+        /*
+         * Some servers may require a downgrade from HTTPS to HTTP. If this happens, `okhttp`
+         * will refuse to do it and will return a redirect response here. We handle this
+         * explicitly by making a new request without authorization information.
+         */
+
+        if (innerResponse.isRedirect) {
+          val target =
+            innerResponse.header("Location") ?: innerResponse.request.url.toString()
+          this.logger.warn("handling HTTP downgrade redirect explicitly {}", target)
+
+          val newRequest1 =
+            newRequest0.newBuilder()
+              .removeHeader("Authorization")
+              .url(target)
+              .build()
+
+          chain.proceed(newRequest1)
+        } else {
+          innerResponse
+        }
       } catch (e: Exception) {
         this.errorBadBearerToken(response, e)
       }

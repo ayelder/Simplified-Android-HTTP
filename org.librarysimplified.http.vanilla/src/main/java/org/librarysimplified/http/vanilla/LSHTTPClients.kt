@@ -51,9 +51,11 @@ class LSHTTPClients(
 
     this.logger.debug("{} available client interceptor extensions", this.interceptors.size)
     for (index in 0 until this.interceptors.size) {
-      val interceptor = this.interceptors[index]
-      this.logger.debug("[{}] interceptor {} {}", index, interceptor.name, interceptor.version)
-      defaultClientBuilder.addInterceptor(interceptor.createInterceptor(context))
+      val interceptorFactory = this.interceptors[index]
+      this.logger.debug("[{}] interceptor {} {}", index, interceptorFactory.name, interceptorFactory.version)
+      val interceptor = interceptorFactory.createInterceptor(context)
+      defaultClientBuilder.addInterceptor(interceptor)
+      defaultClientWithoutRedirectsBuilder.addInterceptor(interceptor)
     }
 
     return LSHTTPClient(
