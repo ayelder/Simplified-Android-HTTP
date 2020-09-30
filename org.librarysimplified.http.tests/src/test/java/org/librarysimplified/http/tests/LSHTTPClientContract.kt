@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.librarysimplified.http.api.LSHTTPAuthorizationBasic
+import org.librarysimplified.http.api.LSHTTPAuthorizationBearerToken
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
@@ -412,7 +413,7 @@ abstract class LSHTTPClientContract {
    */
 
   @Test
-  fun testClientRequestAuthorization() {
+  fun testClientRequestAuthorizationBasic() {
     this.server.enqueue(
       MockResponse()
         .setResponseCode(200)
@@ -433,6 +434,34 @@ abstract class LSHTTPClientContract {
     val request0 = this.server.takeRequest()
     Assertions.assertEquals("GET", request0.method)
     Assertions.assertEquals("Basic YTpi", request0.getHeader("Authorization"))
+  }
+
+  /**
+   * Authorization values are sent.
+   */
+
+  @Test
+  fun testClientRequestAuthorizationBearer() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setAuthorization(LSHTTPAuthorizationBearerToken.ofToken("abcd"))
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+    Assertions.assertEquals("Bearer abcd", request0.getHeader("Authorization"))
   }
 
   /**
