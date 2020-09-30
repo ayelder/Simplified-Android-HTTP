@@ -161,7 +161,6 @@ abstract class LSHTTPBearerTokenContract {
     Assertions.assertEquals(null, this.server.takeRequest(1L, TimeUnit.SECONDS))
   }
 
-
   /**
    * A real bearer token request works.
    */
@@ -178,10 +177,8 @@ abstract class LSHTTPBearerTokenContract {
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
       Assertions.assertEquals(200, status.status)
-      Assertions.assertEquals(
-        "Hello elsewhere.",
-        String(status.bodyStream?.readBytes() ?: ByteArray(0))
-      )
+      Assertions.assertEquals("application/epub+zip", status.contentType.fullType)
+      Assertions.assertTrue(status.contentLength ?: 0L >= 270000L)
     }
   }
 }
