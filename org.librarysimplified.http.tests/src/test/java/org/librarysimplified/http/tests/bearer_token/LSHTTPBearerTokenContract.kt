@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 import org.librarysimplified.http.bearer_token.LSHTTPBearerTokenInterceptors
 import org.librarysimplified.http.tests.LSHTTPTestDirectories
@@ -158,5 +159,26 @@ abstract class LSHTTPBearerTokenContract {
     val sent0 = this.server.takeRequest()
     Assertions.assertEquals(null, sent0.getHeader("Authorization"))
     Assertions.assertEquals(null, this.server.takeRequest(1L, TimeUnit.SECONDS))
+  }
+
+  /**
+   * A real bearer token request works.
+   */
+
+  @Test
+  fun testRealRequest() {
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest("https://circulation.librarysimplified.org/CLASSICS/works/313533/fulfill/17")
+        .allowRedirects(ALLOW_REDIRECTS)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals("application/epub+zip", status.contentType.fullType)
+      Assertions.assertTrue(status.contentLength ?: 0L >= 270000L)
+    }
   }
 }
