@@ -63,6 +63,7 @@ ext {
   }
 
   junitVersion = "5.7.0-M1"
+  irradiaMimeVersion = "1.1.1"
 }
 
 subprojects {
@@ -80,8 +81,8 @@ ext.libraries = [
   autoValue            : "com.google.auto.value:auto-value-annotations:1.7",
   autoValueProcessor   : "com.google.auto.value:auto-value:1.7",
   chucker              : "com.github.ChuckerTeam.Chucker:library:3.2.0",
-  irradiaMimeAPI       : "one.irradia.mime:one.irradia.mime.api:1.0.0",
-  irradiaMimeVanilla   : "one.irradia.mime:one.irradia.mime.vanilla:1.0.0",
+  irradiaMimeAPI       : "one.irradia.mime:one.irradia.mime.api:${irradiaMimeVersion}",
+  irradiaMimeVanilla   : "one.irradia.mime:one.irradia.mime.vanilla:${irradiaMimeVersion}",
   jacksonCore          : "com.fasterxml.jackson.core:jackson-core:2.10.0",
   jacksonDatabind      : "com.fasterxml.jackson.core:jackson-databind:2.10.0",
   jacksonKotlin        : "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9",
@@ -94,8 +95,8 @@ ext.libraries = [
   logbackAndroidClassic: "com.github.tony19:logback-android-classic:1.1.1-6",
   logbackAndroidCore   : "com.github.tony19:logback-android-core:1.1.1-6",
   logbackClassic       : "ch.qos.logback:logback-classic:1.2.3",
-  mockitoAndroid       : "org.mockito:mockito-android:2.22.0",
   mockWebServer        : "com.squareup.okhttp3:mockwebserver:4.9.0",
+  mockitoAndroid       : "org.mockito:mockito-android:2.22.0",
   okhttp               : "com.squareup.okhttp3:okhttp:4.9.0",
   slf4j                : "org.slf4j:slf4j-api:1.7.25",
 ]
