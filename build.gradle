@@ -8,7 +8,7 @@ buildscript {
     throw new GradleException("org.gradle.internal.publish.checksums.insecure must be 'true'")
   }
 
-  ext.kotlin_version = "1.3.72"
+  ext.kotlin_version = "1.4.10"
 
   repositories {
     mavenCentral()
@@ -27,9 +27,9 @@ buildscript {
 }
 
 plugins {
-  id "com.github.ben-manes.versions" version "0.27.0"
+  id "com.github.ben-manes.versions" version "0.33.0"
   id "com.vanniktech.android.junit.jacoco" version "0.16.0"
-  id "ru.vyarus.animalsniffer" version "1.5.0"
+  id "ru.vyarus.animalsniffer" version "1.5.1"
 
   // Deprecated: Migrate to maven-publish.
   //             https://developer.android.com/studio/build/maven-publish-plugin
@@ -62,7 +62,7 @@ ext {
     useDirectoryPublishPath = null
   }
 
-  junitVersion = "5.7.0-M1"
+  junitVersion = "5.7.0"
   irradiaMimeVersion = "1.1.1"
 }
 
