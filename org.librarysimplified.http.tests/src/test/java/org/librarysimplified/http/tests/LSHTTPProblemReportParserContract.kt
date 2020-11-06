@@ -8,6 +8,7 @@ import org.librarysimplified.http.api.LSHTTPProblemReportParserType
 import org.librarysimplified.http.tests.LSHTTPTestDirectories.resourceStreamOf
 import java.io.File
 import java.io.IOException
+import java.util.ServiceLoader
 
 abstract class LSHTTPProblemReportParserContract {
 
@@ -72,5 +73,12 @@ abstract class LSHTTPProblemReportParserContract {
         resourceStreamOf(LSHTTPTestDirectories::class.java, this.testDirectory, "invalid1.json")
       ).use(LSHTTPProblemReportParserType::execute)
     }
+  }
+
+  @Test
+  fun testParserService() {
+    val service =
+      ServiceLoader.load(LSHTTPProblemReportParserFactoryType::class.java)
+        .first()
   }
 }
