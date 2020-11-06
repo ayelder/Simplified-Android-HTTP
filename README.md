@@ -117,6 +117,7 @@ coupled as possible. New features should typically be implemented as new modules
 |[org.librarysimplified.http.chucker](org.librarysimplified.http.chucker)|Library Simplified HTTP client (Chucker extension)|
 |[org.librarysimplified.http.downloads](org.librarysimplified.http.downloads)|Library Simplified HTTP client (File downloads)|
 |[org.librarysimplified.http.tests](org.librarysimplified.http.tests)|Library Simplified HTTP client (Test suite)|
+|[org.librarysimplified.http.uri_builder](org.librarysimplified.http.uri_builder)|Library Simplified HTTP client (URI query builder)|
 |[org.librarysimplified.http.vanilla](org.librarysimplified.http.vanilla)|Library Simplified HTTP client (Vanilla implementation)|
 
 ### License
