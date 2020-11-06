@@ -23,4 +23,10 @@ interface LSHTTPClientType {
 
   fun newRequest(url: String): LSHTTPRequestBuilderType =
     this.newRequest(URI.create(url))
+
+  /**
+   * The user agent string that will be used for client requests.
+   */
+
+  fun userAgent(): String
 }

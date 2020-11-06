@@ -25,7 +25,7 @@ class LSHTTPClient(
     return requestBuilder
   }
 
-  private fun userAgent(): String {
+  override fun userAgent(): String {
     return "${configuration.applicationName}/${configuration.applicationVersion} (Simplified-Android-HTTP ${BuildConfig.HTTP_VERSION_NAME})"
   }
 }
