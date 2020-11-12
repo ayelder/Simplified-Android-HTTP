@@ -1,10 +1,14 @@
 package org.librarysimplified.http.vanilla.internal
 
+import okhttp3.Cookie
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
 import one.irradia.mime.api.MIMEType
 import one.irradia.mime.vanilla.MIMEParser
+import org.joda.time.LocalDateTime
+import org.joda.time.format.ISODateTimeFormat
+import org.librarysimplified.http.api.LSHTTPCookie
 import org.librarysimplified.http.api.LSHTTPProblemReport
 import org.librarysimplified.http.api.LSHTTPProblemReportParserType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects
@@ -75,6 +79,11 @@ class LSHTTPRequest(
           responseCode
         }
 
+      val okCookies =
+        Cookie.parseAll(request.url, response.headers)
+      val cookies =
+        okCookies.map { lsCookieOf(it) }
+
       return if (adjustedStatus >= 400) {
         LSHTTPResponse(
           this,
@@ -87,7 +96,8 @@ class LSHTTPRequest(
             problemReport = problemReport,
             message = responseMessage,
             bodyStream = responseStream,
-            headers = response.headers.toMultimap()
+            headers = response.headers.toMultimap(),
+            cookies = cookies
           )
         )
       } else {
@@ -102,7 +112,8 @@ class LSHTTPRequest(
             problemReport = problemReport,
             message = responseMessage,
             bodyStream = responseStream,
-            headers = response.headers.toMultimap()
+            headers = response.headers.toMultimap(),
+            cookies = cookies
           )
         )
       }
@@ -118,6 +129,39 @@ class LSHTTPRequest(
         status = LSHTTPResponseStatus.Failed(e)
       )
     }
+  }
+
+  private fun lsCookieOf(
+    cookie: Cookie
+  ): LSHTTPCookie {
+
+    /*
+     * Apparently, anything after December 31, 9999 means "does not expire".
+     */
+
+    val expiryBound =
+      LocalDateTime.parse("9999-12-31T00:00:00.0Z", ISODateTimeFormat.dateTime())
+    val expiryGiven =
+      LocalDateTime(cookie.expiresAt)
+    val expires =
+      if (expiryGiven.isAfter(expiryBound)) {
+        null
+      } else {
+        expiryGiven
+      }
+
+    return LSHTTPCookie(
+      name = cookie.name,
+      value = cookie.value,
+      secure = cookie.secure,
+      httpOnly = cookie.httpOnly,
+      expiresAt = expires,
+      attributes = mapOf(
+        Pair("domain", cookie.domain),
+        Pair("hostOnly", cookie.hostOnly.toString()),
+        Pair("persistent", cookie.persistent.toString())
+      )
+    )
   }
 
   private fun parseProblemReportIfNecessary(
