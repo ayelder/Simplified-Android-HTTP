@@ -1,6 +1,7 @@
 dependencies {
   api libraries.irradiaMimeAPI
   api libraries.jacksonCore
+  api libraries.jodaTime
 
   implementation libraries.kotlinStdlib
 }

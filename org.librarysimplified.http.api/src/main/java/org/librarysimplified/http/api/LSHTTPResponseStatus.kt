@@ -36,6 +36,8 @@ sealed class LSHTTPResponseStatus {
     abstract val bodyStream: InputStream?
     /** The headers returned */
     abstract val headers: Map<String, List<String>>
+    /** The cookies returned */
+    abstract val cookies: List<LSHTTPCookie>
 
     /**
      * The values for the given header, or the empty list if the header does not exist.
@@ -63,7 +65,8 @@ sealed class LSHTTPResponseStatus {
       override val contentLength: Long?,
       override val problemReport: LSHTTPProblemReport?,
       override val bodyStream: InputStream?,
-      override val headers: Map<String, List<String>>
+      override val headers: Map<String, List<String>>,
+      override val cookies: List<LSHTTPCookie>
     ) : Responded()
 
     /**
@@ -78,7 +81,8 @@ sealed class LSHTTPResponseStatus {
       override val contentLength: Long?,
       override val problemReport: LSHTTPProblemReport?,
       override val bodyStream: InputStream?,
-      override val headers: Map<String, List<String>>
+      override val headers: Map<String, List<String>>,
+      override val cookies: List<LSHTTPCookie>
     ) : Responded()
   }
 
