@@ -13,12 +13,14 @@ import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
 import org.librarysimplified.http.api.LSHTTPRequestType
+import java.util.TreeMap
 
 class LSHTTPRequestBuilder(
   private val client: LSHTTPClient,
   private val builder: Request.Builder
 ) : LSHTTPRequestBuilderType {
 
+  private val cookies = TreeMap<String, String>()
   private var authorization: LSHTTPAuthorizationType? = null
   private var method: Method = Get
   private var redirects: AllowRedirects = AllowRedirects.ALLOW_REDIRECTS
@@ -62,7 +64,36 @@ class LSHTTPRequestBuilder(
     return this
   }
 
+  override fun addCookie(
+    name: String,
+    value: String
+  ): LSHTTPRequestBuilderType {
+    this.cookies[name] = value
+    return this
+  }
+
+  override fun removeCookie(
+    name: String
+  ): LSHTTPRequestBuilderType {
+    this.cookies.remove(name)
+    return this
+  }
+
+  override fun removeAllCookies(): LSHTTPRequestBuilderType {
+    this.cookies.clear()
+    return this
+  }
+
   override fun build(): LSHTTPRequestType {
+    if (this.cookies.isNotEmpty()) {
+      val headerText =
+        this.cookies.entries.fold(
+          initial = "",
+          operation = { acc, entry -> acc + "${entry.key}=${entry.value};" }
+        )
+      this.builder.header("Cookie", headerText)
+    }
+
     when (val method = this.method) {
       Get -> {
         this.builder.get()

@@ -612,4 +612,122 @@ abstract class LSHTTPClientContract {
     val request1 = this.server.takeRequest()
     Assertions.assertEquals("GET", request1.method)
   }
+
+  /**
+   * Cookies are sent.
+   */
+
+  @Test
+  fun testCookiesSent() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addCookie("x", "y")
+        .addCookie("a", "b")
+        .removeCookie("a")
+        .removeAllCookies()
+        .addCookie("c", "d")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("c=d;", request1.getHeader("Cookie"))
+  }
+
+  /**
+   * Multiple cookies are sent.
+   */
+
+  @Test
+  fun testCookiesSentMultiple() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addCookie("x", "y")
+        .addCookie("a", "b")
+        .addCookie("c", "d")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("a=b;c=d;x=y;", request1.getHeader("Cookie"))
+  }
+
+  /**
+   * Cookies are sent through redirects.
+   */
+
+  @Test
+  fun testCookiesSentMultipleRedirect() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addCookie("x", "y")
+        .addCookie("a", "b")
+        .addCookie("c", "d")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+    Assertions.assertEquals("a=b;c=d;x=y;", request0.getHeader("Cookie"))
+
+    val request1 = this.serverElsewhere.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("a=b;c=d;x=y;", request1.getHeader("Cookie"))
+  }
 }

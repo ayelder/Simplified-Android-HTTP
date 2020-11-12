@@ -82,6 +82,29 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
+   * Add a cookie to the request.
+   */
+
+  fun addCookie(
+    name: String,
+    value: String
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Remove a cookie from the request.
+   */
+
+  fun removeCookie(
+    name: String
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Remove all cookies from the request.
+   */
+
+  fun removeAllCookies(): LSHTTPRequestBuilderType
+
+  /**
    * Build an immutable request based on the parameters given so far.
    */
 
