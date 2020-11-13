@@ -62,6 +62,14 @@ ext {
     useDirectoryPublishPath = null
   }
 
+  if (project.hasProperty("org.librarysimplified.no_signing")) {
+    disableSigning = true
+    logger.warn("org.librarysimplified.no_signing is set: We will not sign artifacts")
+  } else {
+    disableSigning = false
+    logger.warn("org.librarysimplified.no_signing is not set: We will attempt to sign artifacts")
+  }
+
   junitVersion = "5.7.0"
   irradiaMimeVersion = "1.1.1"
 }
@@ -269,7 +277,6 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
   }
 
   apply plugin: "digital.wup.android-maven-publish"
-  apply plugin: "signing"
 
   publishing {
     publications {
@@ -367,9 +374,13 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
     }
   }
 
-  signing {
-    useGpgCmd()
-    sign publishing.publications.basicJar
+  if (!disableSigning) {
+    apply plugin: "signing"
+
+    signing {
+      useGpgCmd()
+      sign publishing.publications.basicJar
+    }
   }
 
   repositories {
