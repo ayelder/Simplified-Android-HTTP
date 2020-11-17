@@ -21,7 +21,7 @@ buildscript {
     classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
     classpath "digital.wup:android-maven-publish:3.6.3"
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    classpath "com.android.tools.build:gradle:4.1.0"
+    classpath "com.android.tools.build:gradle:4.1.1"
     classpath "de.undercouch:gradle-download-task:4.1.1"
   }
 }
