@@ -14,17 +14,20 @@ import org.librarysimplified.http.api.LSHTTPAuthorizationBearerToken
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_UNSAFE_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Delete
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
 import org.librarysimplified.http.api.LSHTTPResponseStatus
+import org.librarysimplified.http.api.LSHTTPTLSOverrides
 import org.librarysimplified.http.vanilla.LSHTTPProblemReportParsers
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes.octetStream
 import org.mockito.Mockito
 import java.io.File
+
 
 abstract class LSHTTPClientContract {
 
@@ -50,6 +53,8 @@ abstract class LSHTTPClientContract {
         applicationName = "HttpTests",
         applicationVersion = "1.0.0"
       )
+
+    this.server.start(30000)
   }
 
   @AfterEach
@@ -729,5 +734,119 @@ abstract class LSHTTPClientContract {
     val request1 = this.serverElsewhere.takeRequest()
     Assertions.assertEquals("GET", request1.method)
     Assertions.assertEquals("a=b;c=d;x=y;", request1.getHeader("Cookie"))
+  }
+
+  /**
+   * Downgrading from HTTPS to HTTP is not allowed.
+   */
+
+  @Test
+  fun testHTTPSDangerousDowngrade0() {
+    val tls =
+      LSHTTPTestTLS.create()
+
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    this.server.useHttps(
+      sslSocketFactory = tls.serverContext.socketFactory,
+      tunnelProxy = false
+    )
+
+    this.configuration =
+      this.configuration.copy(
+        tlsOverrides = LSHTTPTLSOverrides(
+          tls.clientContext.socketFactory,
+          LSHTTPUnsafeTLS.unsafeTrustManager(),
+          LSHTTPUnsafeTLS.unsafeHostnameVerifier()
+        ))
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Redirect!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(301, status.status)
+      Assertions.assertEquals(
+        "Redirect!",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+
+    Assertions.assertEquals(0, this.serverElsewhere.requestCount)
+  }
+
+  /**
+   * Downgrading from HTTPS to HTTP is only allowed upon request.
+   */
+
+  @Test
+  fun testHTTPSDangerousDowngradeOnDemand() {
+    val tls =
+      LSHTTPTestTLS.create()
+
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    this.server.useHttps(
+      sslSocketFactory = tls.serverContext.socketFactory,
+      tunnelProxy = false
+    )
+
+    this.configuration =
+      this.configuration.copy(
+        tlsOverrides = LSHTTPTLSOverrides(
+          tls.clientContext.socketFactory,
+          LSHTTPUnsafeTLS.unsafeTrustManager(),
+          LSHTTPUnsafeTLS.unsafeHostnameVerifier()
+        ))
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Redirect!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .allowRedirects(ALLOW_UNSAFE_REDIRECTS)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+
+    val request1 = this.serverElsewhere.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
   }
 }

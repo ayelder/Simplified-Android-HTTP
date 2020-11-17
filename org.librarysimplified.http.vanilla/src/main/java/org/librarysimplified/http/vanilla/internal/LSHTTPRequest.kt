@@ -13,6 +13,7 @@ import org.librarysimplified.http.api.LSHTTPProblemReport
 import org.librarysimplified.http.api.LSHTTPProblemReportParserType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_UNSAFE_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestType
 import org.librarysimplified.http.api.LSHTTPResponseStatus
@@ -31,6 +32,8 @@ class LSHTTPRequest(
             this.client.client.newCall(this.request)
           DISALLOW_REDIRECTS ->
             this.client.clientWithoutRedirects.newCall(this.request)
+          ALLOW_UNSAFE_REDIRECTS ->
+            this.client.clientWithUnsafeRedirects.newCall(this.request)
         }
 
       val response = call.execute()

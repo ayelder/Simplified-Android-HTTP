@@ -39,6 +39,7 @@ class LSHTTPClients(
         .addInterceptor(LSHTTPInterceptor(this.logger))
         .callTimeout(1L, TimeUnit.MINUTES)
         .connectTimeout(1L, TimeUnit.MINUTES)
+        .followRedirects(true)
         .followSslRedirects(false)
 
     val defaultClientWithoutRedirectsBuilder =
@@ -49,13 +50,38 @@ class LSHTTPClients(
         .followRedirects(false)
         .followSslRedirects(false)
 
+    val defaultClientWithUnsafeRedirectsBuilder =
+      OkHttpClient.Builder()
+        .addInterceptor(LSHTTPInterceptor(this.logger))
+        .callTimeout(1L, TimeUnit.MINUTES)
+        .connectTimeout(1L, TimeUnit.MINUTES)
+        .followRedirects(true)
+        .followSslRedirects(true)
+
+    val clientBuilders =
+      listOf(
+        defaultClientBuilder,
+        defaultClientWithoutRedirectsBuilder,
+        defaultClientWithUnsafeRedirectsBuilder
+      )
+
     this.logger.debug("{} available client interceptor extensions", this.interceptors.size)
     for (index in 0 until this.interceptors.size) {
       val interceptorFactory = this.interceptors[index]
       this.logger.debug("[{}] interceptor {} {}", index, interceptorFactory.name, interceptorFactory.version)
       val interceptor = interceptorFactory.createInterceptor(context)
-      defaultClientBuilder.addInterceptor(interceptor)
-      defaultClientWithoutRedirectsBuilder.addInterceptor(interceptor)
+      clientBuilders.forEach { it.addInterceptor(interceptor) }
+    }
+
+    val tlsOverrides = configuration.tlsOverrides
+    if (tlsOverrides != null) {
+      clientBuilders.forEach {
+        it.sslSocketFactory(
+          sslSocketFactory = tlsOverrides.sslSocketFactory,
+          trustManager = tlsOverrides.trustManager
+        )
+        it.hostnameVerifier(tlsOverrides.hostnameVerifier)
+      }
     }
 
     return LSHTTPClient(
@@ -63,7 +89,8 @@ class LSHTTPClients(
       problemReportParsers = this.problemReportParsers,
       configuration = configuration,
       client = defaultClientBuilder.build(),
-      clientWithoutRedirects = defaultClientWithoutRedirectsBuilder.build()
+      clientWithoutRedirects = defaultClientWithoutRedirectsBuilder.build(),
+      clientWithUnsafeRedirects = defaultClientWithUnsafeRedirectsBuilder.build()
     )
   }
 }

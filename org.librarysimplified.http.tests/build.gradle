@@ -5,6 +5,9 @@ dependencies {
   implementation project(":org.librarysimplified.http.uri_builder")
   implementation project(":org.librarysimplified.http.vanilla")
 
+  implementation libraries.bouncyCastle
+  implementation libraries.bouncyCastlePKI
+  implementation libraries.bouncyCastleTLS
   implementation libraries.jodaTime
   implementation libraries.junitJupiterAPI
   implementation libraries.junitJupiterEngine

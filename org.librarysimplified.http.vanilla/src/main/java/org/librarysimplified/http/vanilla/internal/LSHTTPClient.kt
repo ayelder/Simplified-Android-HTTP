@@ -15,7 +15,8 @@ class LSHTTPClient(
   val configuration: LSHTTPClientConfiguration,
   val problemReportParsers: LSHTTPProblemReportParserFactoryType,
   val client: OkHttpClient,
-  val clientWithoutRedirects: OkHttpClient
+  val clientWithoutRedirects: OkHttpClient,
+  val clientWithUnsafeRedirects: OkHttpClient
 ) : LSHTTPClientType {
 
   override fun newRequest(url: URI): LSHTTPRequestBuilderType {

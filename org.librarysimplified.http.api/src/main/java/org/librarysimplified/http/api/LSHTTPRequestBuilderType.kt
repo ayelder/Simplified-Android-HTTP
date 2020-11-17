@@ -9,8 +9,7 @@ import one.irradia.mime.api.MIMEType
 interface LSHTTPRequestBuilderType {
 
   /**
-   * A specification of whether or not redirects should be allowed. The API never allows
-   * redirecting from an HTTPS address to an HTTP address, for security reasons.
+   * A specification of whether or not redirects should be allowed.
    */
 
   enum class AllowRedirects {
@@ -25,7 +24,13 @@ interface LSHTTPRequestBuilderType {
      * Redirects should never be followed.
      */
 
-    DISALLOW_REDIRECTS
+    DISALLOW_REDIRECTS,
+
+    /**
+     * Redirects between HTTP and HTTPS are allowed. This is unsafe!
+     */
+
+    ALLOW_UNSAFE_REDIRECTS
   }
 
   /**
