@@ -85,13 +85,13 @@ class LSHTTPDownload(
 
     return this.transfer(
       status = status,
-      expectedSize = status.contentLength,
+      expectedSize = status.properties.contentLength,
       inputStream = inputStream
     )
   }
 
   private fun checkMIME(status: LSHTTPResponseStatus.Responded.OK) {
-    if (!this.request.isMIMETypeAcceptable(status.contentType)) {
+    if (!this.request.isMIMETypeAcceptable(status.properties.contentType)) {
       throw UnacceptableMIME(status)
     }
   }

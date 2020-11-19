@@ -65,7 +65,7 @@ abstract class LSHTTPBearerTokenContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals("text/html", status.contentType.fullType)
+      Assertions.assertEquals("text/html", status.properties.contentType.fullType)
     }
   }
 
@@ -105,7 +105,7 @@ abstract class LSHTTPBearerTokenContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
       Assertions.assertEquals("OK!", String(status.bodyStream!!.readBytes()))
     }
 
@@ -152,8 +152,8 @@ abstract class LSHTTPBearerTokenContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.Error
-      Assertions.assertEquals(499, status.status)
-      Assertions.assertTrue(status.message.contains("Bearer token interceptor (LSHTTPBearerTokenInterceptor) parser failed"))
+      Assertions.assertEquals(499, status.properties.status)
+      Assertions.assertTrue(status.properties.message.contains("Bearer token interceptor (LSHTTPBearerTokenInterceptor) parser failed"))
     }
 
     val sent0 = this.server.takeRequest()
@@ -176,9 +176,9 @@ abstract class LSHTTPBearerTokenContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
-      Assertions.assertEquals("application/epub+zip", status.contentType.fullType)
-      Assertions.assertTrue(status.contentLength ?: 0L >= 270000L)
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals("application/epub+zip", status.properties.contentType.fullType)
+      Assertions.assertTrue(status.properties.contentLength ?: 0L >= 270000L)
     }
   }
 }

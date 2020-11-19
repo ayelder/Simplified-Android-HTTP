@@ -43,6 +43,14 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
+   * Remove an HTTP header from the request.
+   */
+
+  fun removeHeader(
+    name: String
+  ): LSHTTPRequestBuilderType
+
+  /**
    * Specify redirect behaviour. The default is [AllowRedirects.ALLOW_REDIRECTS].
    */
 
@@ -79,7 +87,10 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
-   * Set the HTTP authorization.
+   * Set the HTTP authorization. Note that this typically results in the implicit addition of an
+   * `Authorization` header to the resulting HTTP request, but an `Authorization` header set
+   * explicitly using [addHeader] will take precedence. If this is a problem, use [removeHeader]
+   * before calling [setAuthorization] to ensure that no preexisting `Authorization` is used.
    */
 
   fun setAuthorization(
@@ -108,6 +119,36 @@ interface LSHTTPRequestBuilderType {
    */
 
   fun removeAllCookies(): LSHTTPRequestBuilderType
+
+  /**
+   * Set a function that is evaluated for each actual HTTP request made to the server. This
+   * function will be evaluated exactly once for each request made to the server (including
+   * each redirect, if any). Note that the modifier function becomes fully responsible for
+   * enacting any security policy such as setting and unsetting `Authorization` headers across
+   * domains if that is required.
+   *
+   * Note: Most applications will _not_ need to use this method. This is to be considered advanced
+   * functionality that should be used sparingly, if at all. Consider creating an interceptor
+   * extension before trying to use this method.
+   */
+
+  fun setRequestModifier(
+    modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Set a function that is evaluated for each actual HTTP response from the server. This
+   * function will be evaluated exactly once for each response returned by the server (including
+   * each redirect, if any).
+   *
+   * Note: Most applications will _not_ need to use this method. This is to be considered advanced
+   * functionality that should be used sparingly, if at all. Consider creating an interceptor
+   * extension before trying to use this method.
+   */
+
+  fun setResponseObserver(
+    observer: (LSHTTPResponseType) -> Unit
+  ): LSHTTPRequestBuilderType
 
   /**
    * Build an immutable request based on the parameters given so far.

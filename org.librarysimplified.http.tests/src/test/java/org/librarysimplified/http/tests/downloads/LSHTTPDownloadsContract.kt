@@ -98,7 +98,7 @@ abstract class LSHTTPDownloadsContract {
       )
 
     val result = LSHTTPDownloads.download(downloadRequest) as DownloadFailed
-    assertEquals(404, (result.responseStatus as LSHTTPResponseStatus.Responded).status)
+    assertEquals(404, (result.responseStatus as LSHTTPResponseStatus.Responded).properties.status)
     assertFalse(outputFile.exists())
 
     assertEquals(DownloadStarted::class.java, this.eventLog.removeAt(0).javaClass)
@@ -207,7 +207,7 @@ abstract class LSHTTPDownloadsContract {
       )
 
     val result = LSHTTPDownloads.download(downloadRequest) as DownloadCompletedSuccessfully
-    assertTrue(outputFile.isFile())
+    assertTrue(outputFile.isFile)
     assertEquals("Hello!", outputFile.readText())
     assertEquals(6L, result.receivedSize)
 
@@ -340,7 +340,7 @@ abstract class LSHTTPDownloadsContract {
       )
 
     val result = LSHTTPDownloads.download(downloadRequest) as DownloadCompletedSuccessfully
-    assertTrue(outputFile.isFile())
+    assertTrue(outputFile.isFile)
     assertEquals("Hello!", outputFile.readText())
     assertEquals(6L, result.receivedSize)
 
