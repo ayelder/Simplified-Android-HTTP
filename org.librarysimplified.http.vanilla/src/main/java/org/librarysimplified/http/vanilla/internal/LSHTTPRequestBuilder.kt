@@ -1,40 +1,57 @@
 package org.librarysimplified.http.vanilla.internal
 
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.librarysimplified.http.api.LSHTTPAuthorizationType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Delete
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Get
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
+import org.librarysimplified.http.api.LSHTTPRequestProperties
 import org.librarysimplified.http.api.LSHTTPRequestType
+import java.net.MalformedURLException
+import java.net.URI
 import java.util.TreeMap
 
 class LSHTTPRequestBuilder(
   private val client: LSHTTPClient,
-  private val builder: Request.Builder
+  private val target: URI
 ) : LSHTTPRequestBuilderType {
 
-  private val cookies = TreeMap<String, String>()
-  private var authorization: LSHTTPAuthorizationType? = null
-  private var method: Method = Get
+  private var modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties = { it }
   private var redirects: AllowRedirects = AllowRedirects.ALLOW_REDIRECTS
 
+  private var properties =
+    LSHTTPRequestProperties(
+      target = this.target,
+      cookies = sortedMapOf(),
+      headers = sortedMapOf(),
+      method = Get,
+      authorization = null
+    )
+
   init {
-    this.setMethod(this.method)
-    this.setAuthorization(null)
+    try {
+      this.target.toURL()
+    } catch (e: MalformedURLException) {
+      throw IllegalArgumentException(e)
+    }
   }
 
   override fun addHeader(
     name: String,
     value: String
   ): LSHTTPRequestBuilderType {
-    this.builder.addHeader(name, value)
+    val oldHeaders = TreeMap(this.properties.headers)
+    oldHeaders[name] = value
+    this.properties = this.properties.copy(headers = oldHeaders.toSortedMap())
+    return this
+  }
+
+  override fun removeHeader(
+    name: String
+  ): LSHTTPRequestBuilderType {
+    val oldHeaders = TreeMap(this.properties.headers)
+    oldHeaders.remove(name)
+    this.properties = this.properties.copy(headers = oldHeaders.toSortedMap())
     return this
   }
 
@@ -48,19 +65,14 @@ class LSHTTPRequestBuilder(
   override fun setMethod(
     method: Method
   ): LSHTTPRequestBuilderType {
-    this.method = method
+    this.properties = this.properties.copy(method = method)
     return this
   }
 
   override fun setAuthorization(
     authorization: LSHTTPAuthorizationType?
   ): LSHTTPRequestBuilderType {
-    this.authorization = authorization
-    if (authorization != null) {
-      this.builder.header("Authorization", authorization.toHeaderValue())
-    } else {
-      this.builder.removeHeader("Authorization")
-    }
+    this.properties = this.properties.copy(authorization = authorization)
     return this
   }
 
@@ -68,58 +80,39 @@ class LSHTTPRequestBuilder(
     name: String,
     value: String
   ): LSHTTPRequestBuilderType {
-    this.cookies[name] = value
+    val oldCookies = TreeMap(this.properties.cookies)
+    oldCookies[name] = value
+    this.properties = this.properties.copy(cookies = oldCookies.toSortedMap())
     return this
   }
 
   override fun removeCookie(
     name: String
   ): LSHTTPRequestBuilderType {
-    this.cookies.remove(name)
+    val oldCookies = TreeMap(this.properties.cookies)
+    oldCookies.remove(name)
+    this.properties = this.properties.copy(cookies = oldCookies.toSortedMap())
     return this
   }
 
   override fun removeAllCookies(): LSHTTPRequestBuilderType {
-    this.cookies.clear()
+    this.properties = this.properties.copy(cookies = sortedMapOf())
+    return this
+  }
+
+  override fun setModifier(
+    modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
+  ): LSHTTPRequestBuilderType {
+    this.modifier = modifier
     return this
   }
 
   override fun build(): LSHTTPRequestType {
-    if (this.cookies.isNotEmpty()) {
-      val headerText =
-        this.cookies.entries.fold(
-          initial = "",
-          operation = { acc, entry -> acc + "${entry.key}=${entry.value};" }
-        )
-      this.builder.header("Cookie", headerText)
-    }
-
-    when (val method = this.method) {
-      Get -> {
-        this.builder.get()
-      }
-      Head -> {
-        this.builder.head()
-      }
-      is Post -> {
-        val bytes = method.body
-        val type = method.contentType.fullType
-        this.builder.post(bytes.toRequestBody(type.toMediaType()))
-      }
-      is Put -> {
-        val bytes = method.body
-        val type = method.contentType.fullType
-        this.builder.put(bytes.toRequestBody(type.toMediaType()))
-      }
-      Delete -> {
-        this.builder.delete()
-      }
-    }
-
     return LSHTTPRequest(
       client = this.client,
       allowRedirects = this.redirects,
-      request = this.builder.build()
+      modifier = this.modifier,
+      properties = this.properties
     )
   }
 }

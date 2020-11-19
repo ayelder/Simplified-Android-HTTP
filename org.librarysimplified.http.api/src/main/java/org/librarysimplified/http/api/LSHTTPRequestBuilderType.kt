@@ -43,6 +43,14 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
+   * Remove an HTTP header from the request.
+   */
+
+  fun removeHeader(
+    name: String
+  ): LSHTTPRequestBuilderType
+
+  /**
    * Specify redirect behaviour. The default is [AllowRedirects.ALLOW_REDIRECTS].
    */
 
@@ -79,7 +87,10 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
-   * Set the HTTP authorization.
+   * Set the HTTP authorization. Note that this typically results in the implicit addition of an
+   * `Authorization` header to the resulting HTTP request, but an `Authorization` header set
+   * explicitly using [addHeader] will take precedence. If this is a problem, use [removeHeader]
+   * before calling [setAuthorization] to ensure that no preexisting `Authorization` is used.
    */
 
   fun setAuthorization(
@@ -108,6 +119,15 @@ interface LSHTTPRequestBuilderType {
    */
 
   fun removeAllCookies(): LSHTTPRequestBuilderType
+
+  /**
+   * Set a function that is evaluated for each actual HTTP request made to the server. This
+   * function will be evaluated at least once, and exactly once for each redirect request.
+   */
+
+  fun setModifier(
+    modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
+  ): LSHTTPRequestBuilderType
 
   /**
    * Build an immutable request based on the parameters given so far.

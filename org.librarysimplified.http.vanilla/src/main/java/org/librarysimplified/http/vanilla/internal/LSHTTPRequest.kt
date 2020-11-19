@@ -12,29 +12,34 @@ import org.librarysimplified.http.api.LSHTTPCookie
 import org.librarysimplified.http.api.LSHTTPProblemReport
 import org.librarysimplified.http.api.LSHTTPProblemReportParserType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_UNSAFE_REDIRECTS
-import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS
+import org.librarysimplified.http.api.LSHTTPRequestProperties
 import org.librarysimplified.http.api.LSHTTPRequestType
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 
 class LSHTTPRequest(
   private val client: LSHTTPClient,
   private val allowRedirects: AllowRedirects,
-  private val request: Request
+  override val properties: LSHTTPRequestProperties,
+  private val modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
 ) : LSHTTPRequestType {
 
+  private lateinit var request: Request
+
   override fun execute(): LSHTTPResponse {
+    this.request =
+      LSOKHTTPRequests.createRequest(this.properties)
+
     try {
+      this.client.logger.debug(
+        "[{}] creating client with {}",
+        this.request.url,
+        this.allowRedirects
+      )
+
+      val okClient =
+        this.client.createOkClient(this.allowRedirects, this.modifier)
       val call =
-        when (this.allowRedirects) {
-          ALLOW_REDIRECTS ->
-            this.client.client.newCall(this.request)
-          DISALLOW_REDIRECTS ->
-            this.client.clientWithoutRedirects.newCall(this.request)
-          ALLOW_UNSAFE_REDIRECTS ->
-            this.client.clientWithUnsafeRedirects.newCall(this.request)
-        }
+        okClient.newCall(this.request)
 
       val response = call.execute()
       val responseCode = response.code
@@ -83,9 +88,9 @@ class LSHTTPRequest(
         }
 
       val okCookies =
-        Cookie.parseAll(request.url, response.headers)
+        Cookie.parseAll(this.request.url, response.headers)
       val cookies =
-        okCookies.map { lsCookieOf(it) }
+        okCookies.map { this.lsCookieOf(it) }
 
       return if (adjustedStatus >= 400) {
         LSHTTPResponse(
