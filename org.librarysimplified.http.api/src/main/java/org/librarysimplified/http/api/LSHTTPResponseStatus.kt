@@ -1,6 +1,5 @@
 package org.librarysimplified.http.api
 
-import one.irradia.mime.api.MIMEType
 import java.io.InputStream
 
 /**
@@ -13,8 +12,11 @@ import java.io.InputStream
 
 sealed class LSHTTPResponseStatus {
 
-  /** The RFC7807 problem report, if one was provided. */
-  abstract val problemReport: LSHTTPProblemReport?
+  /**
+   * The properties of the response.
+   */
+
+  abstract val properties: LSHTTPResponseProperties?
 
   /**
    * The type of responses that indicate the server returned something.
@@ -22,51 +24,21 @@ sealed class LSHTTPResponseStatus {
 
   sealed class Responded : LSHTTPResponseStatus() {
 
-    /** The HTTP status code, possibly modified by any [LSHTTPProblemReport] returned. */
-    abstract val status: Int
-    /** The original HTTP status code. */
-    abstract val originalStatus: Int
-    /** The server message line (such as "UNAUTHORIZED"). */
-    abstract val message: String
-    /** The parsed server content type. */
-    abstract val contentType: MIMEType
-    /** The length of the content, if available. */
-    abstract val contentLength: Long?
-    /** The stream of data returned as the HTTP response body */
+    abstract override val properties: LSHTTPResponseProperties
+
+    /**
+     * The stream of data returned as the HTTP response body
+     */
+
     abstract val bodyStream: InputStream?
-    /** The headers returned */
-    abstract val headers: Map<String, List<String>>
-    /** The cookies returned */
-    abstract val cookies: List<LSHTTPCookie>
-
-    /**
-     * The values for the given header, or the empty list if the header does not exist.
-     */
-
-    fun headerValues(name: String): List<String> =
-      this.headers[name] ?: listOf()
-
-    /**
-     * The first value for the given header, or `null` if the header does not exist.
-     */
-
-    fun header(name: String): String? =
-      this.headerValues(name).firstOrNull()
 
     /**
      * The server responded with a successful status code.
      */
 
     data class OK(
-      override val status: Int,
-      override val originalStatus: Int,
-      override val message: String,
-      override val contentType: MIMEType,
-      override val contentLength: Long?,
-      override val problemReport: LSHTTPProblemReport?,
-      override val bodyStream: InputStream?,
-      override val headers: Map<String, List<String>>,
-      override val cookies: List<LSHTTPCookie>
+      override val properties: LSHTTPResponseProperties,
+      override val bodyStream: InputStream?
     ) : Responded()
 
     /**
@@ -74,15 +46,8 @@ sealed class LSHTTPResponseStatus {
      */
 
     data class Error(
-      override val status: Int,
-      override val originalStatus: Int,
-      override val message: String,
-      override val contentType: MIMEType,
-      override val contentLength: Long?,
-      override val problemReport: LSHTTPProblemReport?,
-      override val bodyStream: InputStream?,
-      override val headers: Map<String, List<String>>,
-      override val cookies: List<LSHTTPCookie>
+      override val properties: LSHTTPResponseProperties,
+      override val bodyStream: InputStream?
     ) : Responded()
   }
 
@@ -93,7 +58,7 @@ sealed class LSHTTPResponseStatus {
   data class Failed(
     val exception: Exception
   ) : LSHTTPResponseStatus() {
-    override val problemReport: LSHTTPProblemReport? =
+    override val properties: LSHTTPResponseProperties? =
       null
   }
 }

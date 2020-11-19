@@ -7,6 +7,7 @@ import org.librarysimplified.http.api.LSHTTPClientType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType
 import org.librarysimplified.http.api.LSHTTPRequestProperties
+import org.librarysimplified.http.api.LSHTTPResponseType
 import org.librarysimplified.http.vanilla.BuildConfig
 import org.librarysimplified.http.vanilla.extensions.LSHTTPInterceptorFactoryType
 import org.slf4j.LoggerFactory
@@ -35,18 +36,22 @@ class LSHTTPClient(
 
   internal fun createOkClient(
     redirects: LSHTTPRequestBuilderType.AllowRedirects,
-    modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
+    modifier: ((LSHTTPRequestProperties) -> LSHTTPRequestProperties)?,
+    observer: ((LSHTTPResponseType) -> Unit)?
   ): OkHttpClient {
 
-    val interceptor =
-      LSHTTPFunctionalRedirectInterceptor(modifier)
+    val builder = OkHttpClient.Builder()
 
-    val builder =
-      OkHttpClient.Builder()
-        .addNetworkInterceptor(interceptor)
-        .addInterceptor(LSHTTPInterceptor(this.logger))
-        .callTimeout(1L, TimeUnit.MINUTES)
-        .connectTimeout(1L, TimeUnit.MINUTES)
+    if (modifier != null) {
+      builder.addNetworkInterceptor(LSHTTPRedirectRequestInterceptor(modifier))
+    }
+    if (observer != null) {
+      builder.addNetworkInterceptor(LSHTTPRedirectResponseInterceptor(this, observer))
+    }
+
+    builder.addNetworkInterceptor(LSHTTPLoggingInterceptor(this.logger))
+    builder.callTimeout(1L, TimeUnit.MINUTES)
+    builder.connectTimeout(1L, TimeUnit.MINUTES)
 
     when (redirects) {
       LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS -> {

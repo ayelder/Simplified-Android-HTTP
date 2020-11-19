@@ -7,6 +7,7 @@ import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Get
 import org.librarysimplified.http.api.LSHTTPRequestProperties
 import org.librarysimplified.http.api.LSHTTPRequestType
+import org.librarysimplified.http.api.LSHTTPResponseType
 import java.net.MalformedURLException
 import java.net.URI
 import java.util.TreeMap
@@ -16,7 +17,8 @@ class LSHTTPRequestBuilder(
   private val target: URI
 ) : LSHTTPRequestBuilderType {
 
-  private var modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties = { it }
+  private var observer: ((LSHTTPResponseType) -> Unit)? = null
+  private var modifier: ((LSHTTPRequestProperties) -> LSHTTPRequestProperties)? = null
   private var redirects: AllowRedirects = AllowRedirects.ALLOW_REDIRECTS
 
   private var properties =
@@ -100,10 +102,17 @@ class LSHTTPRequestBuilder(
     return this
   }
 
-  override fun setModifier(
+  override fun setRequestModifier(
     modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
   ): LSHTTPRequestBuilderType {
     this.modifier = modifier
+    return this
+  }
+
+  override fun setResponseObserver(
+    observer: (LSHTTPResponseType) -> Unit
+  ): LSHTTPRequestBuilderType {
+    this.observer = observer
     return this
   }
 
@@ -112,6 +121,7 @@ class LSHTTPRequestBuilder(
       client = this.client,
       allowRedirects = this.redirects,
       modifier = this.modifier,
+      observer = this.observer,
       properties = this.properties
     )
   }

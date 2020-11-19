@@ -10,6 +10,13 @@ import java.io.Closeable
 interface LSHTTPResponseType : Closeable {
 
   /**
+   * The properties of the response.
+   */
+
+  val properties: LSHTTPResponseProperties?
+    get() = this.status.properties
+
+  /**
    * The response status.
    */
 

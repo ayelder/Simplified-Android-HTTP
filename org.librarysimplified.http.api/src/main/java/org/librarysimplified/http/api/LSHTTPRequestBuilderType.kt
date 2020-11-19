@@ -122,11 +122,32 @@ interface LSHTTPRequestBuilderType {
 
   /**
    * Set a function that is evaluated for each actual HTTP request made to the server. This
-   * function will be evaluated at least once, and exactly once for each redirect request.
+   * function will be evaluated exactly once for each request made to the server (including
+   * each redirect, if any). Note that the modifier function becomes fully responsible for
+   * enacting any security policy such as setting and unsetting `Authorization` headers across
+   * domains if that is required.
+   *
+   * Note: Most applications will _not_ need to use this method. This is to be considered advanced
+   * functionality that should be used sparingly, if at all. Consider creating an interceptor
+   * extension before trying to use this method.
    */
 
-  fun setModifier(
+  fun setRequestModifier(
     modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Set a function that is evaluated for each actual HTTP response from the server. This
+   * function will be evaluated exactly once for each response returned by the server (including
+   * each redirect, if any).
+   *
+   * Note: Most applications will _not_ need to use this method. This is to be considered advanced
+   * functionality that should be used sparingly, if at all. Consider creating an interceptor
+   * extension before trying to use this method.
+   */
+
+  fun setResponseObserver(
+    observer: (LSHTTPResponseType) -> Unit
   ): LSHTTPRequestBuilderType
 
   /**

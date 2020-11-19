@@ -11,11 +11,14 @@ object LSOKHTTPRequests {
   fun createRequest(
     properties: LSHTTPRequestProperties
   ): Request {
+    val builder = Request.Builder().url(properties.target.toURL())
+    return this.createRequestForBuilder(properties, builder)
+  }
 
-    val builder =
-      Request.Builder()
-        .url(properties.target.toURL())
-
+  fun createRequestForBuilder(
+    properties: LSHTTPRequestProperties,
+    builder: Request.Builder
+  ): Request {
     val authorization = properties.authorization
     if (authorization != null) {
       builder.header("Authorization", authorization.toHeaderValue())
