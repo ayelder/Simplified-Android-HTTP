@@ -2,6 +2,8 @@ package org.librarysimplified.http.bearer_token.internal
 
 import okhttp3.Interceptor
 import okhttp3.Response
+import org.librarysimplified.http.api.LSHTTPAuthorizationBearerToken
+import org.librarysimplified.http.api.LSHTTPRequestProperties
 import org.librarysimplified.http.bearer_token.LSHTTPBearerTokenInterceptors.Companion.bearerTokenContentType
 import org.slf4j.LoggerFactory
 
@@ -23,10 +25,15 @@ class LSHTTPBearerTokenInterceptor : Interceptor {
           body.byteStream()
             .use(LSSimplifiedBearerTokenJSON::deserializeFromStream)
 
+        val properties = originalRequest.tag(LSHTTPRequestProperties::class.java)!!
+        val newAuthorization = LSHTTPAuthorizationBearerToken.ofToken(token.accessToken)
+        val newProperties = properties.copy(authorization = newAuthorization)
+
         val newRequest0 =
           originalRequest
             .newBuilder()
-            .header("Authorization", "Bearer ${token.accessToken}")
+            .header("Authorization", newAuthorization.toHeaderValue())
+            .tag(LSHTTPRequestProperties::class.java, newProperties)
             .url(token.location.toString())
             .build()
 
@@ -44,9 +51,13 @@ class LSHTTPBearerTokenInterceptor : Interceptor {
             innerResponse.header("Location") ?: innerResponse.request.url.toString()
           this.logger.warn("handling HTTP downgrade redirect explicitly {}", target)
 
+          val properties = newRequest0.tag(LSHTTPRequestProperties::class.java)!!
+          val newProperties = properties.copy(authorization = null)
+
           val newRequest1 =
             newRequest0.newBuilder()
               .removeHeader("Authorization")
+              .tag(LSHTTPRequestProperties::class.java, newProperties)
               .url(target)
               .build()
 
