@@ -34,7 +34,6 @@ plugins {
   // Deprecated: Migrate to maven-publish.
   //             https://developer.android.com/studio/build/maven-publish-plugin
   id "digital.wup.android-maven-publish" version "3.6.3"
-  id "me.champeau.gradle.japicmp" version "0.2.9"
 }
 
 ext {
