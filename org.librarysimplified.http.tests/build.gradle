@@ -5,12 +5,15 @@ dependencies {
   implementation project(":org.librarysimplified.http.uri_builder")
   implementation project(":org.librarysimplified.http.vanilla")
 
-  implementation libraries.jodaTime
-  implementation libraries.junitJupiterAPI
-  implementation libraries.junitJupiterEngine
-  implementation libraries.kotlinStdlib
-  implementation libraries.logbackClassic
-  implementation libraries.mockWebServer
-  implementation libraries.mockitoAndroid
+  implementation libraries.bouncycastle
+  implementation libraries.bouncycastle_PKI
+  implementation libraries.bouncycastle_TLS
+  implementation libraries.joda_time
+  implementation libraries.junit_jupiter_api
+  implementation libraries.junit_jupiter_engine
+  implementation libraries.kotlin_stdlib
+  implementation libraries.logback_classic
+  implementation libraries.mockwebserver
+  implementation libraries.mockito_android
   implementation libraries.slf4j
 }

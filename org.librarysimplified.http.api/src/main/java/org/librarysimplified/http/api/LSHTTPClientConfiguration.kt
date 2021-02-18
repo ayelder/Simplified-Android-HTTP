@@ -16,5 +16,11 @@ data class LSHTTPClientConfiguration(
    * The application version (for User-Agent strings).
    */
 
-  val applicationVersion: String
+  val applicationVersion: String,
+
+  /**
+   * Overrides for TLS-related classes. Typically only useful for unit testing.
+   */
+
+  val tlsOverrides: LSHTTPTLSOverrides? = null
 )

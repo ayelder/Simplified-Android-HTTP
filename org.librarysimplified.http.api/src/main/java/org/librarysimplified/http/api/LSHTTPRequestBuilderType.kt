@@ -9,8 +9,7 @@ import one.irradia.mime.api.MIMEType
 interface LSHTTPRequestBuilderType {
 
   /**
-   * A specification of whether or not redirects should be allowed. The API never allows
-   * redirecting from an HTTPS address to an HTTP address, for security reasons.
+   * A specification of whether or not redirects should be allowed.
    */
 
   enum class AllowRedirects {
@@ -25,7 +24,13 @@ interface LSHTTPRequestBuilderType {
      * Redirects should never be followed.
      */
 
-    DISALLOW_REDIRECTS
+    DISALLOW_REDIRECTS,
+
+    /**
+     * Redirects between HTTP and HTTPS are allowed. This is unsafe!
+     */
+
+    ALLOW_UNSAFE_REDIRECTS
   }
 
   /**
@@ -35,6 +40,14 @@ interface LSHTTPRequestBuilderType {
   fun addHeader(
     name: String,
     value: String
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Remove an HTTP header from the request.
+   */
+
+  fun removeHeader(
+    name: String
   ): LSHTTPRequestBuilderType
 
   /**
@@ -74,11 +87,67 @@ interface LSHTTPRequestBuilderType {
   ): LSHTTPRequestBuilderType
 
   /**
-   * Set the HTTP authorization.
+   * Set the HTTP authorization. Note that this typically results in the implicit addition of an
+   * `Authorization` header to the resulting HTTP request, but an `Authorization` header set
+   * explicitly using [addHeader] will take precedence. If this is a problem, use [removeHeader]
+   * before calling [setAuthorization] to ensure that no preexisting `Authorization` is used.
    */
 
   fun setAuthorization(
     authorization: LSHTTPAuthorizationType?
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Add a cookie to the request.
+   */
+
+  fun addCookie(
+    name: String,
+    value: String
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Remove a cookie from the request.
+   */
+
+  fun removeCookie(
+    name: String
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Remove all cookies from the request.
+   */
+
+  fun removeAllCookies(): LSHTTPRequestBuilderType
+
+  /**
+   * Set a function that is evaluated for each actual HTTP request made to the server. This
+   * function will be evaluated exactly once for each request made to the server (including
+   * each redirect, if any). Note that the modifier function becomes fully responsible for
+   * enacting any security policy such as setting and unsetting `Authorization` headers across
+   * domains if that is required.
+   *
+   * Note: Most applications will _not_ need to use this method. This is to be considered advanced
+   * functionality that should be used sparingly, if at all. Consider creating an interceptor
+   * extension before trying to use this method.
+   */
+
+  fun setRequestModifier(
+    modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
+  ): LSHTTPRequestBuilderType
+
+  /**
+   * Set a function that is evaluated for each actual HTTP response from the server. This
+   * function will be evaluated exactly once for each response returned by the server (including
+   * each redirect, if any).
+   *
+   * Note: Most applications will _not_ need to use this method. This is to be considered advanced
+   * functionality that should be used sparingly, if at all. Consider creating an interceptor
+   * extension before trying to use this method.
+   */
+
+  fun setResponseObserver(
+    observer: (LSHTTPResponseType) -> Unit
   ): LSHTTPRequestBuilderType
 
   /**

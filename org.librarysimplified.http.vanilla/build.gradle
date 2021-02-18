@@ -1,10 +1,10 @@
 dependencies {
   api project(":org.librarysimplified.http.api")
 
-  implementation libraries.irradiaMimeAPI
-  implementation libraries.irradiaMimeVanilla
-  implementation libraries.jacksonDatabind
-  implementation libraries.kotlinStdlib
+  implementation libraries.irradia_mime_api
+  implementation libraries.irradia_mime_vanilla
+  implementation libraries.jackson_databind
+  implementation libraries.kotlin_stdlib
   implementation libraries.okhttp
   implementation libraries.slf4j
 }

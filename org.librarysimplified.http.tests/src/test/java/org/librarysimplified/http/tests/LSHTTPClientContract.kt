@@ -3,6 +3,8 @@ package org.librarysimplified.http.tests
 import android.content.Context
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.joda.time.LocalDateTime
+import org.joda.time.format.ISODateTimeFormat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -12,19 +14,27 @@ import org.librarysimplified.http.api.LSHTTPAuthorizationBearerToken
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
+import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_UNSAFE_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Delete
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Head
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Post
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.Method.Put
 import org.librarysimplified.http.api.LSHTTPResponseStatus
+import org.librarysimplified.http.api.LSHTTPResponseType
+import org.librarysimplified.http.api.LSHTTPTLSOverrides
 import org.librarysimplified.http.vanilla.LSHTTPProblemReportParsers
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes
 import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes.octetStream
 import org.mockito.Mockito
+import org.slf4j.LoggerFactory
 import java.io.File
+import java.lang.IllegalStateException
 
 abstract class LSHTTPClientContract {
+
+  private val logger =
+    LoggerFactory.getLogger(LSHTTPClientContract::class.java)
 
   private lateinit var serverElsewhere: MockWebServer
   private lateinit var directory: File
@@ -48,6 +58,8 @@ abstract class LSHTTPClientContract {
         applicationName = "HttpTests",
         applicationVersion = "1.0.0"
       )
+
+    this.server.start(30000)
   }
 
   @AfterEach
@@ -70,7 +82,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals("text/html", status.contentType.fullType)
+      Assertions.assertEquals("text/html", status.properties.contentType.fullType)
     }
   }
 
@@ -91,7 +103,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
 
     val received = this.server.takeRequest()
@@ -116,7 +128,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
 
     val received = this.server.takeRequest()
@@ -141,7 +153,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
 
     val received = this.server.takeRequest()
@@ -167,7 +179,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
 
     val received = this.server.takeRequest()
@@ -192,7 +204,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.Error
-      Assertions.assertEquals(404, status.status)
+      Assertions.assertEquals(404, status.properties.status)
     }
   }
 
@@ -217,8 +229,8 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
-      Assertions.assertEquals(octetStream.fullType, status.contentType.fullType)
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(octetStream.fullType, status.properties.contentType.fullType)
       Assertions.assertArrayEquals("Hello.".toByteArray(), status.bodyStream!!.readBytes())
     }
   }
@@ -250,8 +262,8 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.Error
-      val problemReport = status.problemReport!!
-      Assertions.assertEquals(500, status.status)
+      val problemReport = status.properties.problemReport!!
+      Assertions.assertEquals(500, status.properties.status)
       Assertions.assertEquals("https://example.com/probs/out-of-credit", problemReport.type)
       Assertions.assertEquals("You do not have enough credit.", problemReport.title)
       Assertions.assertEquals(
@@ -288,7 +300,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
   }
 
@@ -351,7 +363,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
       Assertions.assertEquals(
         "Hello elsewhere.",
         String(status.bodyStream?.readBytes() ?: ByteArray(0))
@@ -395,10 +407,10 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(301, status.status)
+      Assertions.assertEquals(301, status.properties.status)
       Assertions.assertEquals(
         this.serverElsewhere.url("/abc").toString(),
-        status.header("Location")
+        status.properties.header("Location")
       )
     }
 
@@ -428,7 +440,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
 
     val request0 = this.server.takeRequest()
@@ -456,7 +468,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
     }
 
     val request0 = this.server.takeRequest()
@@ -492,7 +504,7 @@ abstract class LSHTTPClientContract {
 
     request.execute().use { response ->
       val status = response.status as LSHTTPResponseStatus.Responded.OK
-      Assertions.assertEquals(200, status.status)
+      Assertions.assertEquals(200, status.properties.status)
       Assertions.assertEquals(
         "Hello elsewhere.",
         String(status.bodyStream?.readBytes() ?: ByteArray(0))
@@ -506,5 +518,471 @@ abstract class LSHTTPClientContract {
     val request1 = this.serverElsewhere.takeRequest()
     Assertions.assertEquals("GET", request1.method)
     Assertions.assertEquals(null, request1.getHeader("Authorization"))
+  }
+
+  /**
+   * Cookies are received.
+   */
+
+  @Test
+  fun testCookiesReceive() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .addHeader("Set-Cookie", "x=y; Expires=Mon, 01 Jan 2020 00:00:00 UTC;")
+        .addHeader("Set-Cookie", "a=b; Secure")
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+
+      Assertions.assertEquals(2, status.properties.cookies.size)
+      val cookie0 = status.properties.cookies[0]
+      Assertions.assertEquals(LocalDateTime.parse("2020-01-01T00:00:00.0Z", ISODateTimeFormat.dateTime()), cookie0.expiresAt)
+      Assertions.assertEquals(false, cookie0.secure)
+      Assertions.assertEquals(false, cookie0.httpOnly)
+      Assertions.assertEquals("x", cookie0.name)
+      Assertions.assertEquals("y", cookie0.value)
+
+      val cookie1 = status.properties.cookies[1]
+      Assertions.assertEquals(null, cookie1.expiresAt)
+      Assertions.assertEquals(true, cookie1.secure)
+      Assertions.assertEquals(false, cookie1.httpOnly)
+      Assertions.assertEquals("a", cookie1.name)
+      Assertions.assertEquals("b", cookie1.value)
+    }
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+  }
+
+  /**
+   * Cookies are received through redirects.
+   */
+
+  @Test
+  fun testCookiesReceiveRedirect() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .addHeader("Set-Cookie", "x=y; Expires=Mon, 01 Jan 2020 00:00:00 UTC;")
+        .addHeader("Set-Cookie", "a=b; Secure")
+        .setBody("Hello.")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+
+      Assertions.assertEquals(2, status.properties.cookies.size)
+      val cookie0 = status.properties.cookies[0]
+      Assertions.assertEquals(LocalDateTime.parse("2020-01-01T00:00:00.0Z", ISODateTimeFormat.dateTime()), cookie0.expiresAt)
+      Assertions.assertEquals(false, cookie0.secure)
+      Assertions.assertEquals(false, cookie0.httpOnly)
+      Assertions.assertEquals("x", cookie0.name)
+      Assertions.assertEquals("y", cookie0.value)
+
+      val cookie1 = status.properties.cookies[1]
+      Assertions.assertEquals(null, cookie1.expiresAt)
+      Assertions.assertEquals(true, cookie1.secure)
+      Assertions.assertEquals(false, cookie1.httpOnly)
+      Assertions.assertEquals("a", cookie1.name)
+      Assertions.assertEquals("b", cookie1.value)
+    }
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+  }
+
+  /**
+   * Cookies are sent.
+   */
+
+  @Test
+  fun testCookiesSent() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addCookie("x", "y")
+        .addCookie("a", "b")
+        .removeCookie("a")
+        .removeAllCookies()
+        .addCookie("c", "d")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("c=d;", request1.getHeader("Cookie"))
+  }
+
+  /**
+   * Multiple cookies are sent.
+   */
+
+  @Test
+  fun testCookiesSentMultiple() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addCookie("x", "y")
+        .addCookie("a", "b")
+        .addCookie("c", "d")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("a=b;c=d;x=y;", request1.getHeader("Cookie"))
+  }
+
+  /**
+   * Cookies are sent through redirects.
+   */
+
+  @Test
+  fun testCookiesSentMultipleRedirect() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .addCookie("x", "y")
+        .addCookie("a", "b")
+        .addCookie("c", "d")
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+    Assertions.assertEquals("a=b;c=d;x=y;", request0.getHeader("Cookie"))
+
+    val request1 = this.serverElsewhere.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("a=b;c=d;x=y;", request1.getHeader("Cookie"))
+  }
+
+  /**
+   * Downgrading from HTTPS to HTTP is not allowed.
+   */
+
+  @Test
+  fun testHTTPSDangerousDowngrade0() {
+    val tls =
+      LSHTTPTestTLS.create()
+
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    this.server.useHttps(
+      sslSocketFactory = tls.serverContext.socketFactory,
+      tunnelProxy = false
+    )
+
+    this.configuration =
+      this.configuration.copy(
+        tlsOverrides = LSHTTPTLSOverrides(
+          tls.clientContext.socketFactory,
+          LSHTTPUnsafeTLS.unsafeTrustManager(),
+          LSHTTPUnsafeTLS.unsafeHostnameVerifier()
+        ))
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Redirect!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(301, status.properties.status)
+      Assertions.assertEquals(
+        "Redirect!",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+
+    Assertions.assertEquals(0, this.serverElsewhere.requestCount)
+  }
+
+  /**
+   * Downgrading from HTTPS to HTTP is only allowed upon request.
+   */
+
+  @Test
+  fun testHTTPSDangerousDowngradeOnDemand() {
+    val tls =
+      LSHTTPTestTLS.create()
+
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("Hello.")
+    )
+
+    this.server.useHttps(
+      sslSocketFactory = tls.serverContext.socketFactory,
+      tunnelProxy = false
+    )
+
+    this.configuration =
+      this.configuration.copy(
+        tlsOverrides = LSHTTPTLSOverrides(
+          tls.clientContext.socketFactory,
+          LSHTTPUnsafeTLS.unsafeTrustManager(),
+          LSHTTPUnsafeTLS.unsafeHostnameVerifier()
+        ))
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setBody("Redirect!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .allowRedirects(ALLOW_UNSAFE_REDIRECTS)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "Hello.",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+
+    val request1 = this.serverElsewhere.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+  }
+
+  /**
+   * The given request modifier is called on redirects.
+   */
+
+  @Test
+  fun testRequestModifier0() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.server.url("/a"))
+        .setBody("Redirect to /a")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.server.url("/b"))
+        .setBody("Redirect to /b")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("End!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setRequestModifier { properties ->
+          this.logger.debug("modify: {}", properties.target)
+          when (properties.target.path) {
+            "/xyz" ->
+              properties.copy(cookies = sortedMapOf(Pair("xyz", "xyzValue")))
+            "/a" ->
+              properties.copy(cookies = sortedMapOf(Pair("a", "aValue")))
+            "/b" ->
+              properties.copy(cookies = sortedMapOf(Pair("b", "bValue")))
+            else ->
+              throw IllegalStateException()
+          }
+        }.build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "End!",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    Assertions.assertEquals(3, this.server.requestCount)
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+    Assertions.assertEquals("xyz=xyzValue;", request0.getHeader("Cookie"))
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+    Assertions.assertEquals("a=aValue;", request1.getHeader("Cookie"))
+
+    val request2 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request2.method)
+    Assertions.assertEquals("b=bValue;", request2.getHeader("Cookie"))
+  }
+
+  /**
+   * The given response observer is called on redirects.
+   */
+
+  @Test
+  fun testResponseObserver0() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.server.url("/a"))
+        .setBody("Redirect to /a")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(301)
+        .setHeader("Location", this.server.url("/b"))
+        .setBody("Redirect to /b")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody("End!")
+    )
+
+    val responses = mutableListOf<LSHTTPResponseType>()
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setResponseObserver { responses.add(it) }
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals(
+        "End!",
+        String(status.bodyStream?.readBytes() ?: ByteArray(0))
+      )
+    }
+
+    Assertions.assertEquals(3, responses.size)
+    val response0 = responses[0]
+    val response1 = responses[1]
+    val response2 = responses[2]
+    Assertions.assertEquals(301, response0.properties!!.status)
+    Assertions.assertEquals(301, response1.properties!!.status)
+    Assertions.assertEquals(200, response2.properties!!.status)
+
+    Assertions.assertEquals(3, this.server.requestCount)
+
+    val request0 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request0.method)
+
+    val request1 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request1.method)
+
+    val request2 = this.server.takeRequest()
+    Assertions.assertEquals("GET", request2.method)
   }
 }

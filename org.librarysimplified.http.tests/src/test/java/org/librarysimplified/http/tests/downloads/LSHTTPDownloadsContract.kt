@@ -98,7 +98,7 @@ abstract class LSHTTPDownloadsContract {
       )
 
     val result = LSHTTPDownloads.download(downloadRequest) as DownloadFailed
-    assertEquals(404, (result.responseStatus as LSHTTPResponseStatus.Responded).status)
+    assertEquals(404, (result.responseStatus as LSHTTPResponseStatus.Responded).properties.status)
     assertFalse(outputFile.exists())
 
     assertEquals(DownloadStarted::class.java, this.eventLog.removeAt(0).javaClass)
@@ -207,7 +207,7 @@ abstract class LSHTTPDownloadsContract {
       )
 
     val result = LSHTTPDownloads.download(downloadRequest) as DownloadCompletedSuccessfully
-    assertTrue(outputFile.isFile())
+    assertTrue(outputFile.isFile)
     assertEquals("Hello!", outputFile.readText())
     assertEquals(6L, result.receivedSize)
 
@@ -295,6 +295,59 @@ abstract class LSHTTPDownloadsContract {
 
     assertEquals(DownloadStarted::class.java, this.eventLog.removeAt(0).javaClass)
     assertEquals(DownloadFailedExceptionally::class.java, this.eventLog.removeAt(0).javaClass)
+    assertEquals(0, this.eventLog.size)
+  }
+
+  /**
+   * Downloading through a 302 redirect works.
+   */
+
+  @Test
+  fun testDownload302() {
+    this.serverElsewhere.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setHeader("content-type", "text/plain")
+        .setBody("Hello!")
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(302)
+        .setHeader("Location", this.serverElsewhere.url("/abc"))
+        .setHeader("content-type", "text/html")
+        .setBody("Hello!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .build()
+
+    val outputFile =
+      File(this.directory, "output.txt")
+
+    val downloadRequest =
+      LSHTTPDownloadRequest(
+        request = request,
+        isMIMETypeAcceptable = {
+          type -> type.fullType == "text/plain"
+        },
+        outputFile = outputFile,
+        onEvent = this::logEvent,
+        isCancelled = { false }
+      )
+
+    val result = LSHTTPDownloads.download(downloadRequest) as DownloadCompletedSuccessfully
+    assertTrue(outputFile.isFile)
+    assertEquals("Hello!", outputFile.readText())
+    assertEquals(6L, result.receivedSize)
+
+    assertEquals(DownloadStarted::class.java, this.eventLog.removeAt(0).javaClass)
+    assertEquals(DownloadReceiving::class.java, this.eventLog.removeAt(0).javaClass)
+    assertEquals(DownloadReceiving::class.java, this.eventLog.removeAt(0).javaClass)
+    assertEquals(DownloadCompletedSuccessfully::class.java, this.eventLog.removeAt(0).javaClass)
     assertEquals(0, this.eventLog.size)
   }
 }

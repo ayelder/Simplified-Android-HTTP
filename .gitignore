@@ -25,4 +25,4 @@ overdrive.json
 
 # backup files
 *~
-
+.ci/*.log

@@ -21,7 +21,7 @@ object LSHTTPAuthorizationBasic {
     encoding: Charset = Charsets.UTF_8
   ): LSHTTPAuthorizationType {
     val encoded =
-      Base64Variants.MIME.encode("$userName:$password".toByteArray(encoding))
+      Base64Variants.MIME_NO_LINEFEEDS.encode("$userName:$password".toByteArray(encoding))
     return Basic("Basic $encoded")
   }
 }

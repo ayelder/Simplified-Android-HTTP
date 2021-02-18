@@ -8,7 +8,7 @@ buildscript {
     throw new GradleException("org.gradle.internal.publish.checksums.insecure must be 'true'")
   }
 
-  ext.kotlin_version = "1.4.10"
+  ext.kotlin_version = "1.4.20"
 
   repositories {
     mavenCentral()
@@ -21,7 +21,7 @@ buildscript {
     classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
     classpath "digital.wup:android-maven-publish:3.6.3"
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    classpath "com.android.tools.build:gradle:4.1.0"
+    classpath "com.android.tools.build:gradle:4.1.2"
     classpath "de.undercouch:gradle-download-task:4.1.1"
   }
 }
@@ -34,7 +34,7 @@ plugins {
   // Deprecated: Migrate to maven-publish.
   //             https://developer.android.com/studio/build/maven-publish-plugin
   id "digital.wup.android-maven-publish" version "3.6.3"
-  id "me.champeau.gradle.japicmp" version "0.2.9"
+  id "ca.cutterslade.analyze" version "1.4.3"
 }
 
 ext {
@@ -62,8 +62,13 @@ ext {
     useDirectoryPublishPath = null
   }
 
-  junitVersion = "5.7.0"
-  irradiaMimeVersion = "1.1.1"
+  if (project.hasProperty("org.librarysimplified.no_signing")) {
+    disableSigning = true
+    logger.warn("org.librarysimplified.no_signing is set: We will not sign artifacts")
+  } else {
+    disableSigning = false
+    logger.warn("org.librarysimplified.no_signing is not set: We will attempt to sign artifacts")
+  }
 }
 
 subprojects {
@@ -77,28 +82,50 @@ subprojects {
   }
 }
 
+ext.versions = [
+  bouncycastle     : "1.67",
+  chucker          : "3.2.0",
+  google_auto_value: "1.7",
+  irradia_mime     : "1.1.1",
+  jackson          : "2.10.0",
+  jackson_kotlin   : "2.9.9",
+  javax_annotations: "1.2-b01",
+  jcip_annotations : "1.0-1",
+  joda_time        : "2.9.9",
+  junit            : "5.7.0",
+  logback_android  : "1.1.1-6",
+  logback_classic  : "1.2.3",
+  mockito_android  : "2.22.0",
+  mockwebserver    : "4.9.0",
+  okhttp           : "4.9.0",
+  slf4j_api        : "1.7.25",
+]
+
 ext.libraries = [
-  autoValue            : "com.google.auto.value:auto-value-annotations:1.7",
-  autoValueProcessor   : "com.google.auto.value:auto-value:1.7",
-  chucker              : "com.github.ChuckerTeam.Chucker:library:3.2.0",
-  irradiaMimeAPI       : "one.irradia.mime:one.irradia.mime.api:${irradiaMimeVersion}",
-  irradiaMimeVanilla   : "one.irradia.mime:one.irradia.mime.vanilla:${irradiaMimeVersion}",
-  jacksonCore          : "com.fasterxml.jackson.core:jackson-core:2.10.0",
-  jacksonDatabind      : "com.fasterxml.jackson.core:jackson-databind:2.10.0",
-  jacksonKotlin        : "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9",
-  javaxAnnotationAPI   : "javax.annotation:javax.annotation-api:1.2-b01",
-  jcipAnnotations      : "com.github.stephenc.jcip:jcip-annotations:1.0-1",
-  jodaTime             : "joda-time:joda-time:2.9.9",
-  junitJupiterAPI      : "org.junit.jupiter:junit-jupiter-api:${junitVersion}",
-  junitJupiterEngine   : "org.junit.jupiter:junit-jupiter-engine:${junitVersion}",
-  kotlinStdlib         : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
-  logbackAndroidClassic: "com.github.tony19:logback-android-classic:1.1.1-6",
-  logbackAndroidCore   : "com.github.tony19:logback-android-core:1.1.1-6",
-  logbackClassic       : "ch.qos.logback:logback-classic:1.2.3",
-  mockWebServer        : "com.squareup.okhttp3:mockwebserver:4.9.0",
-  mockitoAndroid       : "org.mockito:mockito-android:2.22.0",
-  okhttp               : "com.squareup.okhttp3:okhttp:4.9.0",
-  slf4j                : "org.slf4j:slf4j-api:1.7.25",
+  google_auto_value          : "com.google.auto.value:auto-value-annotations:${versions.google_auto_value}",
+  google_auto_value_processor: "com.google.auto.value:auto-value:${versions.google_auto_value}",
+  bouncycastle               : "org.bouncycastle:bcpg-jdk15on:${versions.bouncycastle}",
+  bouncycastle_PKI           : "org.bouncycastle:bcpkix-jdk15on:${versions.bouncycastle}",
+  bouncycastle_TLS           : "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}",
+  chucker                    : "com.github.ChuckerTeam.Chucker:library:${versions.chucker}",
+  irradia_mime_api           : "one.irradia.mime:one.irradia.mime.api:${versions.irradia_mime}",
+  irradia_mime_vanilla       : "one.irradia.mime:one.irradia.mime.vanilla:${versions.irradia_mime}",
+  jackson_core               : "com.fasterxml.jackson.core:jackson-core:${versions.jackson}",
+  jackson_databind           : "com.fasterxml.jackson.core:jackson-databind:${versions.jackson}",
+  jackson_kotlin             : "com.fasterxml.jackson.module:jackson-module-kotlin:${versions.jackson_kotlin}",
+  javax_annotation_api       : "javax.annotation:javax.annotation-api:${versions.javax_annotations}",
+  jcip_annotations           : "com.github.stephenc.jcip:jcip-annotations:${versions.jcip_annotations}",
+  joda_time                  : "joda-time:joda-time:${versions.joda_time}",
+  junit_jupiter_api          : "org.junit.jupiter:junit-jupiter-api:${versions.junit}",
+  junit_jupiter_engine       : "org.junit.jupiter:junit-jupiter-engine:${versions.junit}",
+  kotlin_stdlib              : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version",
+  logback_android_classic    : "com.github.tony19:logback-android-classic:${versions.logback_android}",
+  logback_android_core       : "com.github.tony19:logback-android-core:${versions.logback_android}",
+  logback_classic            : "ch.qos.logback:logback-classic:${versions.logback_classic}",
+  mockwebserver              : "com.squareup.okhttp3:mockwebserver:${versions.mockwebserver}",
+  mockito_android            : "org.mockito:mockito-android:${versions.mockito_android}",
+  okhttp                     : "com.squareup.okhttp3:okhttp:${versions.okhttp}",
+  slf4j                      : "org.slf4j:slf4j-api:${versions.slf4j_api}",
 ]
 
 apply plugin: "com.vanniktech.android.junit.jacoco"
@@ -107,6 +134,8 @@ apply plugin: "de.undercouch.download"
 allprojects { project ->
   group = project.ext["GROUP"]
   version = project.ext["VERSION_NAME"]
+
+  apply plugin: 'ca.cutterslade.analyze'
 }
 
 // Configure all projects
@@ -196,11 +225,11 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
       }
 
       afterEvaluate {
-        def scandoVersion     = "0.0.5"
-        def scandoSHA256      = "d1e6e57a791363d2a6e9930a15b779fb45855006f5ee7e0119286652ccad7827"
-        def scandoSource      = "https://repo1.maven.org/maven2/com/io7m/scando/com.io7m.scando.cmdline/${scandoVersion}/com.io7m.scando.cmdline-${scandoVersion}-main.jar"
-        def scandoBinDir      = "${project.buildDir}/bin/"
-        def scandoTarget      = "${scandoBinDir}/scando.jar"
+        def scandoVersion = "0.0.5"
+        def scandoSHA256 = "d1e6e57a791363d2a6e9930a15b779fb45855006f5ee7e0119286652ccad7827"
+        def scandoSource = "https://repo1.maven.org/maven2/com/io7m/scando/com.io7m.scando.cmdline/${scandoVersion}/com.io7m.scando.cmdline-${scandoVersion}-main.jar"
+        def scandoBinDir = "${project.buildDir}/bin/"
+        def scandoTarget = "${scandoBinDir}/scando.jar"
 
         task scandoMakeDirectories() {
           mkdir "${scandoBinDir}"
@@ -269,7 +298,6 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
   }
 
   apply plugin: "digital.wup.android-maven-publish"
-  apply plugin: "signing"
 
   publishing {
     publications {
@@ -367,9 +395,13 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
     }
   }
 
-  signing {
-    useGpgCmd()
-    sign publishing.publications.basicJar
+  if (!disableSigning) {
+    apply plugin: "signing"
+
+    signing {
+      useGpgCmd()
+      sign publishing.publications.basicJar
+    }
   }
 
   repositories {
