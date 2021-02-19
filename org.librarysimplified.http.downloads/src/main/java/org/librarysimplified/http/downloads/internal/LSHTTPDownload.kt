@@ -153,7 +153,7 @@ class LSHTTPDownload(
     total: Long
   ) {
     val fileLength = this.request.outputFile.length()
-    if (expectedSize != null) {
+    if (expectedSize != null && expectedSize >= 0) {
       check(fileLength == expectedSize) {
         "Output file size $fileLength must match expected size $expectedSize"
       }

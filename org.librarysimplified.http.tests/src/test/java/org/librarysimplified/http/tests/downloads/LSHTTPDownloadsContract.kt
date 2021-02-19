@@ -3,6 +3,7 @@ package org.librarysimplified.http.tests.downloads
 import android.content.Context
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -28,6 +29,7 @@ import org.librarysimplified.http.tests.LSHTTPTestDirectories
 import org.librarysimplified.http.vanilla.LSHTTPProblemReportParsers
 import org.mockito.Mockito
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
 import java.io.File
 
 abstract class LSHTTPDownloadsContract {
@@ -255,6 +257,47 @@ abstract class LSHTTPDownloadsContract {
     assertEquals(DownloadStarted::class.java, this.eventLog.removeAt(0).javaClass)
     assertEquals(DownloadFailedUnacceptableMIME::class.java, this.eventLog.removeAt(0).javaClass)
     assertEquals(0, this.eventLog.size)
+  }
+
+  /**
+   * Downloading does not fail the file size check if the content length is unknown (the response
+   * is chunked).
+   */
+
+  @Test
+  fun testDownloadUnknownContentLength() {
+    val body = "hello world"
+    val bodyInputStream = ByteArrayInputStream(body.toByteArray())
+    val buffer = Buffer().apply { readFrom(bodyInputStream) }
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setHeader("content-type", "text/plain")
+        .setChunkedBody(buffer, 8)
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .build()
+
+    val outputFile =
+      File(this.directory, "output.txt")
+
+    val downloadRequest =
+      LSHTTPDownloadRequest(
+        request = request,
+        outputFile = outputFile,
+        onEvent = this::logEvent,
+        isCancelled = { false }
+      )
+
+    val result = LSHTTPDownloads.download(downloadRequest) as DownloadCompletedSuccessfully
+    assertTrue(outputFile.isFile)
+    assertEquals("hello world", outputFile.readText())
+    assertEquals(11L, result.receivedSize)
   }
 
   /**
