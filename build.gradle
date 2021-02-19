@@ -96,6 +96,7 @@ ext.versions = [
   logback_android  : "1.1.1-6",
   logback_classic  : "1.2.3",
   mockito_android  : "2.22.0",
+  mockito_kotlin   : "2.2.0",
   mockwebserver    : "4.9.0",
   okhttp           : "4.9.0",
   slf4j_api        : "1.7.25",
@@ -124,6 +125,7 @@ ext.libraries = [
   logback_classic            : "ch.qos.logback:logback-classic:${versions.logback_classic}",
   mockwebserver              : "com.squareup.okhttp3:mockwebserver:${versions.mockwebserver}",
   mockito_android            : "org.mockito:mockito-android:${versions.mockito_android}",
+  mockito_kotlin             : "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}",
   okhttp                     : "com.squareup.okhttp3:okhttp:${versions.okhttp}",
   slf4j                      : "org.slf4j:slf4j-api:${versions.slf4j_api}",
 ]

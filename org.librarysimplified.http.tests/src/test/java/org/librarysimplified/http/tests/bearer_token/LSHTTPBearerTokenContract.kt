@@ -1,16 +1,23 @@
 package org.librarysimplified.http.tests.bearer_token
 
 import android.content.Context
+import com.nhaarman.mockitokotlin2.anyOrNull
+import com.nhaarman.mockitokotlin2.argThat
+import com.nhaarman.mockitokotlin2.doAnswer
+import com.nhaarman.mockitokotlin2.inOrder
+import com.nhaarman.mockitokotlin2.mock
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.librarysimplified.http.api.LSHTTPAuthorizationBearerToken
 import org.librarysimplified.http.api.LSHTTPClientConfiguration
 import org.librarysimplified.http.api.LSHTTPClientProviderType
 import org.librarysimplified.http.api.LSHTTPProblemReportParserFactoryType
 import org.librarysimplified.http.api.LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS
+import org.librarysimplified.http.api.LSHTTPRequestProperties
 import org.librarysimplified.http.api.LSHTTPResponseStatus
 import org.librarysimplified.http.bearer_token.LSHTTPBearerTokenInterceptors
 import org.librarysimplified.http.tests.LSHTTPTestDirectories
@@ -113,6 +120,70 @@ abstract class LSHTTPBearerTokenContract {
     Assertions.assertEquals(null, sent0.getHeader("Authorization"))
     val sent1 = this.server.takeRequest()
     Assertions.assertEquals("Bearer abcd", sent1.getHeader("Authorization"))
+  }
+
+  /**
+   * When a bearer token is received, the request properties passed to a request modifier are
+   * updated to reflect it.
+   */
+
+  @Test
+  fun testPropertiesUpdated() {
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setHeader("content-type", LSHTTPBearerTokenInterceptors.bearerTokenContentType)
+        .setBody(
+          """
+{
+  "access_token": "abcd",
+  "expires_in": 1000,
+  "location": "${this.server.url("/abc")}"
+}
+          """.trimIndent()
+        )
+    )
+
+    this.server.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setHeader("content-type", "text/plain")
+        .setBody("OK!")
+    )
+
+    val clients = this.clients()
+    val client = clients.create(this.context, this.configuration)
+
+    val requestModifier = mock<(LSHTTPRequestProperties) -> LSHTTPRequestProperties>() {
+      on { invoke(anyOrNull()) } doAnswer { it.getArgument(0) }
+    }
+
+    val request =
+      client.newRequest(this.server.url("/xyz").toString())
+        .setAuthorization(LSHTTPAuthorizationBearerToken.ofToken("original_token"))
+        .setRequestModifier(requestModifier)
+        .build()
+
+    request.execute().use { response ->
+      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      Assertions.assertEquals(200, status.properties.status)
+      Assertions.assertEquals("OK!", String(status.bodyStream!!.readBytes()))
+    }
+
+    val sent0 = this.server.takeRequest()
+    Assertions.assertEquals("Bearer original_token", sent0.getHeader("Authorization"))
+    val sent1 = this.server.takeRequest()
+    Assertions.assertEquals("Bearer abcd", sent1.getHeader("Authorization"))
+
+    inOrder(requestModifier) {
+      verify(requestModifier).invoke(argThat {
+        authorization!!.toHeaderValue().equals("Bearer original_token")
+      })
+
+      verify(requestModifier).invoke(argThat {
+        authorization!!.toHeaderValue().equals("Bearer abcd")
+      })
+    }
   }
 
   /**

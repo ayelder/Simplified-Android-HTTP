@@ -15,5 +15,6 @@ dependencies {
   implementation libraries.logback_classic
   implementation libraries.mockwebserver
   implementation libraries.mockito_android
+  implementation libraries.mockito_kotlin
   implementation libraries.slf4j
 }
