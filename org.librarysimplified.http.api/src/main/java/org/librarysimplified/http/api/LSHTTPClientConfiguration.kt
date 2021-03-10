@@ -1,5 +1,7 @@
 package org.librarysimplified.http.api
 
+import java.util.concurrent.TimeUnit
+
 /**
  * The basic client configuration.
  */
@@ -22,5 +24,11 @@ data class LSHTTPClientConfiguration(
    * Overrides for TLS-related classes. Typically only useful for unit testing.
    */
 
-  val tlsOverrides: LSHTTPTLSOverrides? = null
+  val tlsOverrides: LSHTTPTLSOverrides? = null,
+
+  /**
+   * The timeout used for all I/O operations (connects, reads, writes, etc).
+   */
+
+  val timeout: Pair<Long, TimeUnit> = Pair(1L, TimeUnit.MINUTES)
 )

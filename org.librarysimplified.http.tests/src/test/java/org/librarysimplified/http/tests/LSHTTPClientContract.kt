@@ -3,6 +3,8 @@ package org.librarysimplified.http.tests
 import android.content.Context
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.joda.time.Duration
+import org.joda.time.Instant
 import org.joda.time.LocalDateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.junit.jupiter.api.AfterEach
@@ -29,7 +31,9 @@ import org.librarysimplified.http.vanilla.internal.LSHTTPMimeTypes.octetStream
 import org.mockito.Mockito
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.lang.IllegalStateException
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.util.concurrent.TimeUnit
 
 abstract class LSHTTPClientContract {
 
@@ -64,8 +68,17 @@ abstract class LSHTTPClientContract {
 
   @AfterEach
   fun testTearDown() {
-    this.server.shutdown()
-    this.serverElsewhere.shutdown()
+    try {
+      this.server.shutdown()
+    } catch (e: Exception) {
+      this.logger.debug("shutting down server: ", e)
+    }
+
+    try {
+      this.serverElsewhere.shutdown()
+    } catch (e: Exception) {
+      this.logger.debug("shutting down server: ", e)
+    }
   }
 
   /**
@@ -984,5 +997,97 @@ abstract class LSHTTPClientContract {
 
     val request2 = this.server.takeRequest()
     Assertions.assertEquals("GET", request2.method)
+  }
+
+  /**
+   * Timeouts work.
+   */
+
+  @Test
+  fun testTimeout0() {
+    val initialURL =
+      this.server.url("/xyz").toString()
+
+    this.server.enqueue(MockResponse().setHeadersDelay(10L, TimeUnit.SECONDS))
+
+    val clients = this.clients()
+
+    this.configuration =
+      this.configuration.copy(timeout = Pair(5L, TimeUnit.SECONDS))
+
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(initialURL)
+        .build()
+
+    val timeThen =
+      Instant.now()
+    val timeExpected =
+      timeThen.plus(Duration.standardSeconds(5L))
+
+    val ex = Assertions.assertThrows(InterruptedIOException::class.java) {
+      request.execute().use { response ->
+        when (val status = response.status) {
+          is LSHTTPResponseStatus.Responded.OK ->
+            Assertions.fail()
+          is LSHTTPResponseStatus.Responded.Error ->
+            Assertions.fail()
+          is LSHTTPResponseStatus.Failed ->
+            throw status.exception
+        }
+      }
+    }
+
+    this.logger.debug("expected exception: ", ex)
+    val timeNow = Instant.now()
+    Assertions.assertTrue(timeNow.isAfter(timeExpected))
+  }
+
+  /**
+   * Timeouts work.
+   */
+
+  @Test
+  fun testTimeout1() {
+    val initialURL =
+      this.server.url("/xyz").toString()
+
+    this.server.enqueue(
+      MockResponse()
+        .setBodyDelay(10L, TimeUnit.SECONDS)
+        .setBody("Hello.")
+    )
+
+    val clients = this.clients()
+
+    this.configuration =
+      this.configuration.copy(timeout = Pair(5L, TimeUnit.SECONDS))
+
+    val client = clients.create(this.context, this.configuration)
+    val request =
+      client.newRequest(initialURL)
+        .build()
+
+    val timeThen =
+      Instant.now()
+    val timeExpected =
+      timeThen.plus(Duration.standardSeconds(5L))
+
+    val ex = Assertions.assertThrows(InterruptedIOException::class.java) {
+      request.execute().use { response ->
+        when (val status = response.status) {
+          is LSHTTPResponseStatus.Responded.OK ->
+            status.bodyStream?.readBytes()
+          is LSHTTPResponseStatus.Responded.Error ->
+            Assertions.fail()
+          is LSHTTPResponseStatus.Failed ->
+            Assertions.fail()
+        }
+      }
+    }
+
+    this.logger.debug("expected exception: ", ex)
+    val timeNow = Instant.now()
+    Assertions.assertTrue(timeNow.isAfter(timeExpected))
   }
 }
