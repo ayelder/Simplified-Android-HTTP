@@ -50,8 +50,12 @@ class LSHTTPClient(
     }
 
     builder.addNetworkInterceptor(LSHTTPLoggingInterceptor(this.logger))
-    builder.callTimeout(1L, TimeUnit.MINUTES)
-    builder.connectTimeout(1L, TimeUnit.MINUTES)
+
+    val timeout = this.configuration.timeout
+    builder.callTimeout(timeout.first, timeout.second)
+    builder.connectTimeout(timeout.first, timeout.second)
+    builder.readTimeout(timeout.first, timeout.second)
+    builder.writeTimeout(timeout.first, timeout.second)
 
     when (redirects) {
       LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS -> {
