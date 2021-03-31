@@ -424,3 +424,7 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
 // Add ktlint tasks to root project. This executes faster than configuring
 // the tasks for each subproject individually.
 apply from: file("$rootDir/ktlint.gradle")
+
+subprojects {
+  assemble.dependsOn ktlint
+}
