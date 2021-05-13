@@ -12,6 +12,7 @@ dependencies {
   implementation libraries.junit_jupiter_api
   implementation libraries.junit_jupiter_engine
   implementation libraries.kotlin_stdlib
+  implementation libraries.kotlin_reflect
   implementation libraries.logback_classic
   implementation libraries.mockwebserver
   implementation libraries.mockito_android

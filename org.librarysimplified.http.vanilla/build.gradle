@@ -5,6 +5,7 @@ dependencies {
   implementation libraries.irradia_mime_vanilla
   implementation libraries.jackson_databind
   implementation libraries.kotlin_stdlib
+  implementation libraries.kotlin_reflect
   implementation libraries.okhttp
   implementation libraries.slf4j
 }
