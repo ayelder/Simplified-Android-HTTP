@@ -31,11 +31,8 @@ plugins {
   id "com.github.ben-manes.versions" version "0.33.0"
   id "com.vanniktech.android.junit.jacoco" version "0.16.0"
   id "ru.vyarus.animalsniffer" version "1.5.1"
-
-  // Deprecated: Migrate to maven-publish.
-  //             https://developer.android.com/studio/build/maven-publish-plugin
-  id "digital.wup.android-maven-publish" version "3.6.3"
   id "ca.cutterslade.analyze" version "1.4.3"
+  id "maven-publish"
 }
 
 ext {
@@ -303,120 +300,25 @@ Automatic-Module-Name: ${POM_AUTOMATIC_MODULE_NAME}
         "Unrecognized packaging type ${POM_PACKAGING} for ${project}")
   }
 
-  task javadocsJar(type: Jar) {
-    classifier = "javadoc"
-  }
+  /*
+   * Configure publishing for the various project types.
+   */
 
-  task sourcesJar(type: Jar) {
-    classifier = "sources"
-    from "src/main/java", "src/main/resources"
-  }
+  switch (POM_PACKAGING) {
+    case "jar":
+      apply from: file("$rootDir/build_publishing.gradle")
+      break
 
-  apply plugin: "digital.wup.android-maven-publish"
+    case "apk":
+      break
 
-  publishing {
-    publications {
-      basicJar(MavenPublication) {
-        switch (POM_PACKAGING) {
-          case "jar":
-            from components.java
-            break
+    case "aar":
+      apply from: file("$rootDir/build_publishing.gradle")
+      break
 
-          case "aar":
-            from components.android
-            break
-        }
-
-        artifact sourcesJar
-        artifact javadocsJar
-
-        pom {
-          artifactId = POM_ARTIFACT_ID
-          name = POM_NAME
-          packaging = POM_PACKAGING
-          description = POM_DESCRIPTION
-          url = POM_URL
-
-          scm {
-            connection = POM_SCM_CONNECTION
-            developerConnection = POM_SCM_DEV_CONNECTION
-            url = POM_SCM_URL
-          }
-
-          licenses {
-            license {
-              name = POM_LICENCE_NAME
-              url = POM_LICENCE_URL
-            }
-          }
-
-          developers {
-            developer {
-              id = "io7m"
-              name = "Mark Raynsford"
-              email = "code@io7m.com"
-              url = "https://www.io7m.com"
-            }
-            developer {
-              id = "winniequinn"
-              name = "Winnie Quinn"
-              url = "https://www.winniequinn.com/"
-            }
-            developer {
-              id = "gioneill"
-              name = "Greg O'Neill"
-              url = "https://github.com/gioneill"
-            }
-            developer {
-              id = "mattniehoff"
-              name = "Matt Niehoff"
-              url = "https://github.com/mattniehoff"
-            }
-            developer {
-              id = "MalcolmMcFly"
-              name = "Malcolm Woods"
-              url = "https://github.com/MalcolmMcFly"
-            }
-            developer {
-              id = "twaddington"
-              name = "Tristan Waddington"
-              url = "https://github.com/twaddington"
-            }
-          }
-        }
-      }
-    }
-
-    repositories {
-      if (useDirectoryPublish) {
-        logger.info("using ${useDirectoryPublishPath} for publication")
-
-        maven {
-          name = "Directory"
-          url = "file://${useDirectoryPublishPath}"
-        }
-      }
-
-      if (version.endsWith("-SNAPSHOT")) {
-        maven {
-          url = "https://oss.sonatype.org/content/repositories/snapshots/"
-          name = "SonatypeSnapshots"
-          credentials(PasswordCredentials) {
-            username mavenCentralUsername
-            password mavenCentralPassword
-          }
-        }
-      }
-    }
-  }
-
-  if (!disableSigning) {
-    apply plugin: "signing"
-
-    signing {
-      useGpgCmd()
-      sign publishing.publications.basicJar
-    }
+    default:
+      throw new IllegalStateException(
+        "Unrecognized packaging type ${POM_PACKAGING} for ${project}")
   }
 
   repositories {
