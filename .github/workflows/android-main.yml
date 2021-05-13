@@ -26,8 +26,8 @@ jobs:
           NYPL_GITHUB_ACCESS_TOKEN:         ${{ secrets.NYPL_GITHUB_ACCESS_TOKEN }}
         run: .ci/ci-main.sh normal
       - name: Upload test report
-          uses: actions/upload-artifact@v2
-          if: ${{ always() }}
-          with:
-            name: junit-test-report
-            path: ./org.librarysimplified.http.tests/build/reports/tests/testDebugUnitTest
+        uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: junit-test-report
+          path: ./org.librarysimplified.http.tests/build/reports/tests/testDebugUnitTest
