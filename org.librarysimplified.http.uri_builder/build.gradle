@@ -3,4 +3,5 @@ dependencies {
   api libraries.jackson_core
 
   implementation libraries.kotlin_stdlib
+  implementation libraries.kotlin_reflect
 }

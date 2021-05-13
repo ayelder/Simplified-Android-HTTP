@@ -3,6 +3,7 @@ dependencies {
 
   implementation libraries.chucker
   implementation libraries.kotlin_stdlib
+  implementation libraries.kotlin_reflect
   implementation libraries.okhttp
   implementation libraries.slf4j
 }
