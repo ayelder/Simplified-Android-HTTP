@@ -393,7 +393,7 @@ abstract class LSHTTPClientContract {
   }
 
   /**
-   * Server redirects are not followed if disabled.
+   * Server redirects are not followed if disabled, and result in an error.
    */
 
   @Test
@@ -419,7 +419,7 @@ abstract class LSHTTPClientContract {
         .build()
 
     request.execute().use { response ->
-      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      val status = response.status as LSHTTPResponseStatus.Responded.Error
       Assertions.assertEquals(301, status.properties.status)
       Assertions.assertEquals(
         this.serverElsewhere.url("/abc").toString(),
@@ -796,8 +796,9 @@ abstract class LSHTTPClientContract {
         .build()
 
     request.execute().use { response ->
-      val status = response.status as LSHTTPResponseStatus.Responded.OK
+      val status = response.status as LSHTTPResponseStatus.Responded.Error
       Assertions.assertEquals(301, status.properties.status)
+      Assertions.assertEquals("Refused to follow a redirect to ${this.serverElsewhere.url("/abc")}.", status.properties.message)
       Assertions.assertEquals(
         "Redirect!",
         String(status.bodyStream?.readBytes() ?: ByteArray(0))
