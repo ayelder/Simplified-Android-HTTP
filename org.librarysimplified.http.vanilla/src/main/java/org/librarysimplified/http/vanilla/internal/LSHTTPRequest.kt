@@ -9,7 +9,7 @@ import org.librarysimplified.http.api.LSHTTPResponseType
 
 class LSHTTPRequest(
   private val client: LSHTTPClient,
-  internal val allowRedirects: AllowRedirects,
+  private val allowRedirects: AllowRedirects,
   override val properties: LSHTTPRequestProperties,
   private val modifier: ((LSHTTPRequestProperties) -> LSHTTPRequestProperties)?,
   private val observer: ((LSHTTPResponseType) -> Unit)?
