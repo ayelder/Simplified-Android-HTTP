@@ -87,22 +87,44 @@ class LSHTTPResponse(
           cookies = cookies
         )
 
-      return if (adjustedStatus >= 400) {
-        LSHTTPResponse(
-          status = LSHTTPResponseStatus.Responded.Error(
-            properties = properties,
-            bodyStream = responseStream
-          ),
-          response = response
-        )
+      return when {
+        adjustedStatus >= 400 -> {
+          LSHTTPResponse(
+            status = LSHTTPResponseStatus.Responded.Error(
+              properties = properties,
+              bodyStream = responseStream
+            ),
+            response = response
+          )
+        }
+        adjustedStatus >= 300 -> {
+          LSHTTPResponse(
+            status = LSHTTPResponseStatus.Responded.Error(
+              properties = properties.copy(
+                message = refusedRedirectMessage(properties.header("location"))
+              ),
+              bodyStream = responseStream
+            ),
+            response = response
+          )
+        }
+        else -> {
+          LSHTTPResponse(
+            status = LSHTTPResponseStatus.Responded.OK(
+              properties = properties,
+              bodyStream = responseStream
+            ),
+            response = response
+          )
+        }
+      }
+    }
+
+    private fun refusedRedirectMessage(location: String?): String {
+      return if (location != null) {
+        "Refused to follow a redirect to ${location}."
       } else {
-        LSHTTPResponse(
-          status = LSHTTPResponseStatus.Responded.OK(
-            properties = properties,
-            bodyStream = responseStream
-          ),
-          response = response
-        )
+        "Refused to follow a redirect."
       }
     }
 
