@@ -1,6 +1,6 @@
 buildscript {
-  if ("$gradle.gradleVersion" != "7.0") {
-    throw new GradleException("Gradle version 7.0 is required (received $gradle.gradleVersion)")
+  if ("$gradle.gradleVersion" != "7.0.2") {
+    throw new GradleException("Gradle version 7.0.2 is required (received $gradle.gradleVersion)")
   }
 
   // https://github.com/gradle/gradle/issues/11308#issuecomment-554317655
@@ -20,7 +20,7 @@ buildscript {
     classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
     classpath "digital.wup:android-maven-publish:3.6.3"
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    classpath "com.android.tools.build:gradle:4.1.3"
+    classpath "com.android.tools.build:gradle:7.0.2"
     classpath "de.undercouch:gradle-download-task:4.1.1"
     classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
   }
