@@ -1,11 +1,11 @@
 dependencies {
   implementation project(":org.librarysimplified.http.vanilla")
 
-  implementation libraries.chucker
-  implementation libraries.kotlin_stdlib
-  implementation libraries.kotlin_reflect
-  implementation libraries.okhttp
-  implementation libraries.slf4j
+  implementation libs.chucker
+  implementation libs.kotlin.stdlib
+  implementation libs.kotlin.reflect
+  implementation libs.okhttp
+  implementation libs.slf4j
 }
 
 android {
