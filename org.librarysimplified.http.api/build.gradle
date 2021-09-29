@@ -1,8 +1,8 @@
 dependencies {
-  api libraries.irradia_mime_api
-  api libraries.jackson_core
-  api libraries.joda_time
+  api libs.irradia.mime.api
+  api libs.jackson.core
+  api libs.joda.time
 
-  implementation libraries.kotlin_stdlib
-  implementation libraries.kotlin_reflect
+  implementation libs.kotlin.stdlib
+  implementation libs.kotlin.reflect
 }
