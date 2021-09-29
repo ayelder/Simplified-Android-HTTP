@@ -1,3 +1,13 @@
+enableFeaturePreview('VERSION_CATALOGS')
+
+dependencyResolutionManagement {
+  versionCatalogs {
+    libs {
+      from(files("org.librarysimplified.android.platform/build_libraries.toml"))
+    }
+  }
+}
+
 include ':org.librarysimplified.http.api'
 include ':org.librarysimplified.http.bearer_token'
 include ':org.librarysimplified.http.chucker'
