@@ -37,6 +37,14 @@ all codebases without duplicating code.
 
 #### Build!
 
+Make sure you clone this repository with `git clone --recursive`. 
+If you forgot to use `--recursive`, then execute:
+
+```
+$ git submodule init
+$ git submodule update --remote --recursive
+```
+
 The short version: Install an [Android SDK](#android-sdk) and run:
 
 ~~~
