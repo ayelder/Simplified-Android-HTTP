@@ -13,5 +13,6 @@ data class LSHTTPRequestProperties(
   val cookies: SortedMap<String, String>,
   val headers: SortedMap<String, String>,
   val method: Method,
-  val authorization: LSHTTPAuthorizationType?
+  val authorization: LSHTTPAuthorizationType?,
+  val otherProperties: Map<String, Any>
 )
