@@ -136,6 +136,16 @@ interface LSHTTPRequestBuilderType {
     modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
   ): LSHTTPRequestBuilderType
 
+
+  /**
+   * Set an extension property of indefinite type.
+   */
+
+  fun setExtensionProperty(
+    key: String,
+    value: Any
+  ): LSHTTPRequestBuilderType
+
   /**
    * Set a function that is evaluated for each actual HTTP response from the server. This
    * function will be evaluated exactly once for each response returned by the server (including

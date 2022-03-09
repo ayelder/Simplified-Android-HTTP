@@ -27,7 +27,8 @@ class LSHTTPRequestBuilder(
       cookies = sortedMapOf(),
       headers = sortedMapOf(),
       method = Get,
-      authorization = null
+      authorization = null,
+      otherProperties = emptyMap()
     )
 
   init {
@@ -106,6 +107,16 @@ class LSHTTPRequestBuilder(
     modifier: (LSHTTPRequestProperties) -> LSHTTPRequestProperties
   ): LSHTTPRequestBuilderType {
     this.modifier = modifier
+    return this
+  }
+
+  override fun setExtensionProperty(
+    key: String,
+    value: Any
+  ): LSHTTPRequestBuilderType {
+    val oldProperties = this.properties.otherProperties
+    val newItem = key to value
+    this.properties = this.properties.copy(otherProperties = oldProperties + newItem)
     return this
   }
 
