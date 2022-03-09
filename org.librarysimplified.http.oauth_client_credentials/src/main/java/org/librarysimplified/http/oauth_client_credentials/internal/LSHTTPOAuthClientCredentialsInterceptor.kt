@@ -36,7 +36,7 @@ class LSHTTPOAuthClientCredentialsInterceptor(
     val originalAuthorization = properties.authorization
 
     // Check if we should use OAuth Client Credentials
-    return if (authenticateURI == null) {
+    return if (authenticateURI == null || properties.authorization == null) {
       chain.proceed(originalRequest)
     } else {
       proceedWithOAuthClientCredentials(
