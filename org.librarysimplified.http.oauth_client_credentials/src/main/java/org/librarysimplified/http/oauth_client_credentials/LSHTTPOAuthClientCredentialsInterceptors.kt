@@ -3,12 +3,13 @@ package org.librarysimplified.http.oauth_client_credentials
 import android.content.Context
 import okhttp3.Interceptor
 import org.librarysimplified.http.oauth_client_credentials.internal.LSHTTPOAuthClientCredentialsInterceptor
+import org.librarysimplified.http.oauth_client_credentials.internal.LSHTTPOAuthClientCredentialsInterceptor.RepositoryKey
 import org.librarysimplified.http.oauth_client_credentials.internal.LSHTTPOAuthTokenRepository
 import org.librarysimplified.http.vanilla.extensions.LSHTTPInterceptorFactoryType
 
 class LSHTTPOAuthClientCredentialsInterceptors : LSHTTPInterceptorFactoryType {
 
-  private val tokenRepository: LSHTTPOAuthTokenRepository<String, String> =
+  private val tokenRepository: LSHTTPOAuthTokenRepository<RepositoryKey, String> =
     LSHTTPOAuthTokenRepository()
 
   override val name: String =

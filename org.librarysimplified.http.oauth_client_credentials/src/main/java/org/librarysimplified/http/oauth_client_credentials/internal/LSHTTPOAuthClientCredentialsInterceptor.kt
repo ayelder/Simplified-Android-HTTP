@@ -22,9 +22,14 @@ import org.slf4j.LoggerFactory
  * This is originally implemented for FirstBook authentication in OpenEbooks.
  */
 
-class LSHTTPOAuthClientCredentialsInterceptor(
-  private val tokenRepository: LSHTTPOAuthTokenRepository<String, String>
+internal class LSHTTPOAuthClientCredentialsInterceptor(
+  private val tokenRepository: LSHTTPOAuthTokenRepository<RepositoryKey, String>
 ) : Interceptor {
+
+  internal data class RepositoryKey(
+    val authenticateURI: String,
+    val originalAuthorization: String
+  )
 
   private val logger =
     LoggerFactory.getLogger(LSHTTPOAuthClientCredentialsInterceptor::class.java)
@@ -36,7 +41,7 @@ class LSHTTPOAuthClientCredentialsInterceptor(
     val originalAuthorization = properties.authorization
 
     // Check if we should use OAuth Client Credentials
-    return if (authenticateURI == null || properties.authorization == null) {
+    return if (authenticateURI == null || originalAuthorization == null) {
       chain.proceed(originalRequest)
     } else {
       proceedWithOAuthClientCredentials(
@@ -52,7 +57,7 @@ class LSHTTPOAuthClientCredentialsInterceptor(
     chain: Interceptor.Chain,
     originalRequest: Request,
     authenticateURI: String,
-    originalAuthorization: LSHTTPAuthorizationType?
+    originalAuthorization: LSHTTPAuthorizationType
   ): Response {
     logger.debug("Intercepting request to ${originalRequest.url}.")
 
@@ -69,10 +74,11 @@ class LSHTTPOAuthClientCredentialsInterceptor(
   private fun getToken(
     chain: Interceptor.Chain,
     authenticateURI: String,
-    originalAuthorization: LSHTTPAuthorizationType?
+    originalAuthorization: LSHTTPAuthorizationType
   ): String {
     val oneMinuteAgo = LocalDateTime.now().minusMinutes(1)
-    return tokenRepository.getOrRefresh(authenticateURI) {
+    val key = RepositoryKey(authenticateURI, originalAuthorization.toHeaderValue())
+    return tokenRepository.getOrRefresh(key) {
       val token = fetchToken(chain, authenticateURI, originalAuthorization)
       val expiration = token.expiresAt(oneMinuteAgo)
       logger.debug("New token will expire at $expiration.")
