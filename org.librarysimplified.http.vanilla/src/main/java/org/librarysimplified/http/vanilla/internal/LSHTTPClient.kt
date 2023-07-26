@@ -24,6 +24,8 @@ class LSHTTPClient(
   internal val logger =
     LoggerFactory.getLogger(LSHTTPClient::class.java)
 
+  private val defaultOkHttpClient = createDefaultOkClient();
+
   override fun newRequest(url: URI): LSHTTPRequestBuilderType {
     val requestBuilder = LSHTTPRequestBuilder(this, url)
     requestBuilder.addHeader("User-Agent", this.userAgent())
@@ -34,20 +36,8 @@ class LSHTTPClient(
     return "${this.configuration.applicationName}/${this.configuration.applicationVersion} (Simplified-Android-HTTP ${BuildConfig.HTTP_VERSION_NAME})"
   }
 
-  internal fun createOkClient(
-    redirects: LSHTTPRequestBuilderType.AllowRedirects,
-    modifier: ((LSHTTPRequestProperties) -> LSHTTPRequestProperties)?,
-    observer: ((LSHTTPResponseType) -> Unit)?
-  ): OkHttpClient {
-
+  private fun createDefaultOkClient(): OkHttpClient {
     val builder = OkHttpClient.Builder()
-
-    if (modifier != null) {
-      builder.addNetworkInterceptor(LSHTTPRedirectRequestInterceptor(modifier))
-    }
-    if (observer != null) {
-      builder.addNetworkInterceptor(LSHTTPRedirectResponseInterceptor(this, observer))
-    }
 
     builder.addNetworkInterceptor(LSHTTPLoggingInterceptor(this.logger))
 
@@ -56,21 +46,6 @@ class LSHTTPClient(
     builder.connectTimeout(timeout.first, timeout.second)
     builder.readTimeout(timeout.first, timeout.second)
     builder.writeTimeout(timeout.first, timeout.second)
-
-    when (redirects) {
-      LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS -> {
-        builder.followRedirects(true)
-        builder.followSslRedirects(false)
-      }
-      LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS -> {
-        builder.followRedirects(false)
-        builder.followSslRedirects(false)
-      }
-      LSHTTPRequestBuilderType.AllowRedirects.ALLOW_UNSAFE_REDIRECTS -> {
-        builder.followRedirects(true)
-        builder.followSslRedirects(true)
-      }
-    }
 
     this.logger.debug("{} available client interceptor extensions", this.interceptors.size)
     for (index in this.interceptors.indices) {
@@ -87,6 +62,38 @@ class LSHTTPClient(
         trustManager = tlsOverrides.trustManager
       )
       builder.hostnameVerifier(tlsOverrides.hostnameVerifier)
+    }
+
+    return builder.build()
+  }
+
+  internal fun createUpdatedDefaultOkClient(
+    redirects: LSHTTPRequestBuilderType.AllowRedirects,
+    modifier: ((LSHTTPRequestProperties) -> LSHTTPRequestProperties)?,
+    observer: ((LSHTTPResponseType) -> Unit)?
+  ): OkHttpClient {
+    val builder = defaultOkHttpClient.newBuilder()
+
+    if (modifier != null) {
+      builder.addNetworkInterceptor(LSHTTPRedirectRequestInterceptor(modifier))
+    }
+    if (observer != null) {
+      builder.addNetworkInterceptor(LSHTTPRedirectResponseInterceptor(this, observer))
+    }
+
+    when (redirects) {
+      LSHTTPRequestBuilderType.AllowRedirects.ALLOW_REDIRECTS -> {
+        builder.followRedirects(true)
+        builder.followSslRedirects(false)
+      }
+      LSHTTPRequestBuilderType.AllowRedirects.DISALLOW_REDIRECTS -> {
+        builder.followRedirects(false)
+        builder.followSslRedirects(false)
+      }
+      LSHTTPRequestBuilderType.AllowRedirects.ALLOW_UNSAFE_REDIRECTS -> {
+        builder.followRedirects(true)
+        builder.followSslRedirects(true)
+      }
     }
 
     return builder.build()

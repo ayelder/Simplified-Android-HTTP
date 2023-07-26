@@ -29,7 +29,7 @@ class LSHTTPRequest(
       )
 
       val okClient =
-        this.client.createOkClient(
+        this.client.createUpdatedDefaultOkClient(
           redirects = this.allowRedirects,
           modifier = this.modifier,
           observer = this.observer
